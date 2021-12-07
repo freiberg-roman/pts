@@ -1,0 +1,12 @@
+defaults:
+  - _self_
+  - gen: gen
+
+root_dir: "./exp"
+mode: "gen"  # others are 'train_rg', 'train_dqn' and 'test'
+
+hydra:
+  run:
+    dir: ${root_dir}/${mode}/${now:%Y.%m.%d}/${now:%H%M%S}
+  sweep:
+    dir: ${root_dir}/${mode}/${now:%Y.%m.%d}/${now:%H%M%S}
