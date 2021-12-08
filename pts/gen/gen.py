@@ -1,10 +1,12 @@
-import numpy as np
-from alr_sim.sims.SimFactory import SimRepository
-import alr_sim.utils.geometric_transformation as gt
-from omegaconf import DictConfig
 import os
 import time
+
+import alr_sim.utils.geometric_transformation as gt
 import imageio
+import numpy as np
+from alr_sim.sims.SimFactory import SimRepository
+from omegaconf import DictConfig
+
 
 def generate(cfg_gen: DictConfig):
 
@@ -14,12 +16,14 @@ def generate(cfg_gen: DictConfig):
 
     sim_factory = SimRepository.get_factory(settings.simulator)
     robot = sim_factory.create_robot()
-    scene = sim_factory.create_scene(robot, object_list=[]) # TODO add objects
-    cam = sim_factory.create_camera("cage_cam",
-                                    cfg_gen.data.cam_width,
-                                    cfg_gen.data.cam_height,
-                                    [0.7, 0.0, settings.drop_height + 0.7], # init pos.
-                                    gt.euler2quat([-np.pi * 7 / 8, 0, np.pi / 2])) # init rot.
+    scene = sim_factory.create_scene(robot, object_list=[])  # TODO add objects
+    cam = sim_factory.create_camera(
+        "cage_cam",
+        cfg_gen.data.cam_width,
+        cfg_gen.data.cam_height,
+        [0.7, 0.0, settings.drop_height + 0.7],  # init pos.
+        gt.euler2quat([-np.pi * 7 / 8, 0, np.pi / 2]),
+    )  # init rot.
     scene.add_object(cam)
 
     # ### Adding bin ###
@@ -40,26 +44,35 @@ def generate(cfg_gen: DictConfig):
         objects = np.random.random_integers(0, settings.total_num_obj - 1, num_obj)
 
         for obj_id in objects:
-            mesh_path = os.path.join(cfg_gen.meshes.object_path, "%03d/%03d.urdf" % (obj_id, obj_id))
-            shape_name = 'shape_%03d_it_%06d' % (obj_id, i)
+            mesh_path = os.path.join(
+                cfg_gen.meshes.object_path, "%03d/%03d.urdf" % (obj_id, obj_id)
+            )
+            shape_name = "shape_%03d_it_%06d" % (obj_id, i)
 
-            drop_x = (settings.limits[0][1] - settings.limits[0][0]) * np.random.random_sample() + \
-                     settings.limits[0][0]
-            drop_y = (settings.limits[1][1] - settings.limits[1][0]) * np.random.random_sample() + \
-                     settings.limits[1][0]
+            drop_x = (
+                settings.limits[0][1] - settings.limits[0][0]
+            ) * np.random.random_sample() + settings.limits[0][0]
+            drop_y = (
+                settings.limits[1][1] - settings.limits[1][0]
+            ) * np.random.random_sample() + settings.limits[1][0]
             obj_pos = [drop_x, drop_y, settings.drop_height]
-            obj_angle = [2 * np.pi * np.random.random_sample(), 2 * np.pi * np.random.random_sample(),
-                                  2 * np.pi * np.random.random_sample()]
+            obj_angle = [
+                2 * np.pi * np.random.random_sample(),
+                2 * np.pi * np.random.random_sample(),
+                2 * np.pi * np.random.random_sample(),
+            ]
 
-            print('dropping  -->', mesh_path)
+            print("dropping  -->", mesh_path)
             object_order.append(["%03d.urdf" % i, obj_pos, obj_angle])
-            shape = scene.load_object_to_scene(path_to_urdf=mesh_path,
-                                                                position=obj_pos,
-                                                                orientation=obj_angle,
-                                                                  id_name=shape_name)
+            shape = scene.load_object_to_scene(
+                path_to_urdf=mesh_path,
+                position=obj_pos,
+                orientation=obj_angle,
+                id_name=shape_name,
+            )
             print(shape)
 
-            # wait some time until the current object falls onto the table before releasing the other
+            # wait ...
             for i in range(64):
                 robot.nextStep()
 
@@ -76,11 +89,14 @@ def generate(cfg_gen: DictConfig):
 
     print("saving images ...")
     if cfg_gen.data.save_numpy:
-        np.save(settings.path + "depth_img/numpy" + "image_%06d.npy" % i, depth)
-        # np.save(segmask_dir_numpy + "seg_mask_%06d.npy" % i, seg)
+        np.save(settings.path + "depth_img/numpy/" + "image_%06d.npy" % i, depth)
+        np.save(settings.path + "segmentation/numpy/" + "seg_mask_%06d.npy" % i, seg)
     if cfg_gen.data.save_png:
-        imageio.imsave(settings.path + "depth_img/png" + "image_%06d.png" % i, depth.astype(np.uint8))
-        # imageio.imsave(segmask_dir_png + "seg_mask_%06d.png" % i, seg.astype(np.uint8))
+        imageio.imsave(
+            settings.path + "depth_img/png/" + "image_%06d.png" % i,
+            depth.astype(np.uint8),
+        )
+        imageio.imsave(settings.path + "segmentation/png/" + "seg_mask_%06d.png" % i, seg.astype(np.uint8))
     if cfg_gen.data.save_color_img:
         imageio.imsave(settings.path + "color_img/" + "image_%06d.png" % i, rgb)
 

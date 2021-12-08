@@ -1,5 +1,3 @@
-# @package _group_
-
 name: "generation"
 
 settings:
@@ -13,7 +11,7 @@ settings:
                     # (e.g., if set to 50, then first 50 object meshes in object_path will be used - from 000.urdf to 049.urdf)
   drop_height: 0.5 # the distance between dropping location and the tabletop
   limits: [[0.45, 0.6], [-0.15, 0.15], [-0.2, -0.05]] # workspace limits
-  remove_container: False
+  # remove_container: False
 
 meshes:
   object_path: resources/obj/random_urdfs # default version assumes that objects meshes are kept in a form
