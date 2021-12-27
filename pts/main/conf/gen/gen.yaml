@@ -14,7 +14,7 @@ settings:
   # remove_container: False
 
 meshes:
-  object_path: resources/obj/random_urdfs # default version assumes that objects meshes are kept in a form
+  object_path: resources/obj/random_urdfs/ # default version assumes that objects meshes are kept in a form
                                           # such as "./000/000.urdf" in this folder. If you want to keep them
                                           # with a different folder organisation or different file name format,
                                           # string parsing format should be adapted in the code!
