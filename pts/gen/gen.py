@@ -29,6 +29,9 @@ def generate(cfg_gen: DictConfig):
     )
 
     for i in range(settings.database_size):
+
+        # ### This is a hack which will be changed in the future version ###
+
         scene.object_list = []
         scene.name2id_map = {}  # dict mapping names to obj_ids
         scene._objects = UniqueDict(

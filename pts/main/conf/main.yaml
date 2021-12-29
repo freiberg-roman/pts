@@ -1,9 +1,11 @@
 defaults:
   - _self_
   - gen: gen
+  - eval_model: push_dqn
+  - reward_model: mask_rg
 
 root_dir: "./exp"
-mode: "gen"  # others are 'train_rg', 'train_dqn' and 'test'
+mode: "train_rg"  # others are 'train_rg', 'train_dqn' and 'test',
 
 hydra:
   run:

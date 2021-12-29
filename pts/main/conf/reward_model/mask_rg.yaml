@@ -1,0 +1,15 @@
+name: "mask_rg"
+
+path_store_weights: "."
+path_load_weights: "."
+
+train:
+  dataset_path: "."
+  images: "."
+  masks: "."
+  epochs: 20
+  lr: 0.0001
+  batch_size: 5
+  backbone: resnet50
+  backbone_pretrained: True
+  cuda_available: False
