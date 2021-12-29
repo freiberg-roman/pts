@@ -14,16 +14,7 @@ from torch.utils import data as td
 from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
 from torchvision.models.detection.mask_rcnn import MaskRCNNPredictor
 
-# for static print method
-from utils.train import evaluate
-
-from pts.utils.train import reduce_dict
-
-# TODO add these const params into a config file
-# RPN params: Anchor sizes are same as that of sd_mask_rcnn, aspect ratios are the default vals.
-# ANCHOR_SIZES = ((8, 16, 32, 64, 128),)
-# ASPECT_RATIOS = ((1.0,),) #((0.5, 1.0, 2.0),)
-
+from pts.utils.train_eval import evaluate, reduce_dict
 
 HEIGHT = 1024
 WIDTH = 1024
