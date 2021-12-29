@@ -5,11 +5,12 @@ import alr_sim.utils.geometric_transformation as gt
 import imageio
 import numpy as np
 import pybullet as p
-from alr_sim.sims.pybullet.pb_utils.pybullet_scene_object import PyBulletObject
 from alr_sim.sims.SimFactory import SimRepository
 from alr_sim.sims.universal_sim.PrimitiveObjects import Box
 from alr_sim.utils.unique_dict import UniqueDict
 from omegaconf import DictConfig
+
+from pts.utils.sim_helper import create_clutter
 
 
 def generate(cfg_gen: DictConfig):
@@ -66,51 +67,18 @@ def generate(cfg_gen: DictConfig):
         # ### Begin generation ###
 
         start_time = time.time()
-        num_obj = np.random.random_integers(settings.min_num_obj, settings.max_num_obj)
 
-        # ### Dropping objets to table ###
-
-        object_order = []
-        objects = np.random.random_integers(0, settings.total_num_obj - 1, num_obj)
-
-        for idx, obj_id in enumerate(objects):
-            obj_name = "shape_run_%03d_it_%06d" % (i, idx)
-
-            drop_x = (
-                settings.limits[0][1] - settings.limits[0][0]
-            ) * np.random.random_sample() + settings.limits[0][0]
-            drop_y = (
-                settings.limits[1][1] - settings.limits[1][0]
-            ) * np.random.random_sample() + settings.limits[1][0]
-            obj_pos = [drop_x, drop_y, settings.drop_height]
-            obj_orientation = [
-                2 * np.pi * np.random.random_sample(),
-                2 * np.pi * np.random.random_sample(),
-                2 * np.pi * np.random.random_sample(),
-            ]
-
-            pb_obj = PyBulletObject(
-                urdf_name="%03d" % obj_id,
-                object_name=obj_name,
-                position=obj_pos,
-                orientation=obj_orientation,
-                data_dir=os.path.dirname(os.path.abspath(__file__))
-                + "/../../"
-                + cfg_gen.meshes.object_path
-                + "%03d" % obj_id,
-            )
-
-            print("dropping  -->", pb_obj)
-            object_order.append(["%03d.urdf" % idx, obj_pos, obj_orientation])
-            scene.add_object(pb_obj)
-
-            # wait ...
-            for _ in range(256):
-                robot.nextStep()
-
-        # wait a little bit, once all the objects were dropped
-        for _ in range(4096):
-            robot.nextStep()
+        create_clutter(
+            scene,
+            robot,
+            settings.min_num_obj,
+            settings.max_num_obj,
+            settings.total_num_obj,
+            settings.limits,
+            settings.drop_height,
+            cfg_gen.meshes.object_path,
+            i,
+        )
 
         # ### Saving image ###
 

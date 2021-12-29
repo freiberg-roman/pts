@@ -5,7 +5,7 @@ defaults:
   - reward_model: mask_rg
 
 root_dir: "./exp"
-mode: "train_rg"  # others are 'train_rg', 'train_dqn' and 'test',
+mode: "gen"  # others are 'train_rg', 'train_dqn' and 'test',
 
 hydra:
   run:
