@@ -9,11 +9,10 @@ from utils.sim_helper import create_clutter
 
 class TrainScene:
     def __init__(self, settings):
+        self.min_obj = settings.min_number_objects
+        self.max_obj = settings.max_number_objects
+        self.total_num = settings.total_number_objects
         self.ws_limits = settings.workspace_limits
-        self.min_obj = settings.min_num_obj
-        self.max_obj = settings.max_num_obj
-        self.total_num = settings.total_num_obj
-        self.drop_limits = settings.drop_limits
         self.drop_height = settings.drop_height
 
         # ### Scene creating ###
@@ -23,9 +22,9 @@ class TrainScene:
         self.scene = sim_factory.create_scene(self.robot, object_list=[])
         self.cam = sim_factory.create_camera(
             "cage_cam",
-            settings.cam_width,
-            settings.cam_height,
-            [0.7, 0.0, settings.drop_height + 0.7],  # init pos.
+            settings.data.cam_width,
+            settings.data.cam_height,
+            [0.7, 0.0, self.drop_height + 0.7],  # init pos.
             gt.euler2quat([-np.pi * 7 / 8, 0, np.pi / 2]),
         )
         self.scene.object_list = []
@@ -106,7 +105,7 @@ class TrainScene:
             self.min_obj,
             self.max_obj,
             self.total_num,
-            self.drop_limits,
+            self.ws_limits,
             self.drop_height,
             self.path,
             it,

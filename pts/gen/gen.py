@@ -25,7 +25,7 @@ def generate(cfg_gen: DictConfig):
         "cage_cam",
         cfg_gen.data.cam_width,
         cfg_gen.data.cam_height,
-        [0.7, 0.0, settings.drop_height + 0.7],  # init pos.
+        [0.0, 0.0, settings.drop_height + 0.7],  # init pos.
         gt.euler2quat([-np.pi * 7 / 8, 0, np.pi / 2]),
     )
 
@@ -97,7 +97,7 @@ def generate(cfg_gen: DictConfig):
             os.makedirs(settings.path + "depth_img/png/", exist_ok=True)
             imageio.imsave(
                 settings.path + "depth_img/png/" + "image_%06d.png" % i,
-                depth.astype(np.uint8),
+                depth.astype(np.float),
             )
 
             os.makedirs(settings.path + "segmentation/png/", exist_ok=True)
@@ -107,7 +107,7 @@ def generate(cfg_gen: DictConfig):
             )
             imageio.imsave(
                 settings.path + "segmentation/png/" + "seg_mask_value_%06d.png" % i,
-                seg[1].astype(np.uint8),
+                seg[1].astype(np.float),
             )
         if cfg_gen.data.save_color_img:
             os.makedirs(settings.path + "color_img/", exist_ok=True)

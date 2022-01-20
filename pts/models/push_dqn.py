@@ -8,7 +8,7 @@ import torchvision
 from torch.autograd import Variable
 
 
-class reactive_net(nn.Module):
+class ReactiveNet(nn.Module):
     def __init__(self, use_cuda):  # , snapshot=None
         super(reactive_net, self).__init__()
         self.use_cuda = use_cuda
@@ -311,9 +311,9 @@ class reactive_net(nn.Module):
             return self.output_prob, self.interm_feat
 
 
-class reinforcement_net(nn.Module):
+class ReinforcementNet(nn.Module):
     def __init__(self, use_cuda):  # , snapshot=None
-        super(reinforcement_net, self).__init__()
+        super(ReinforcementNet, self).__init__()
         self.use_cuda = use_cuda
 
         # Initialize network trunks with DenseNet pre-trained on ImageNet
