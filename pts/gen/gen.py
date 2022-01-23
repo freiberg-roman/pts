@@ -28,6 +28,22 @@ def generate(cfg_gen: DictConfig):
         [0.0, 0.0, settings.drop_height + 0.7],  # init pos.
         gt.euler2quat([-np.pi * 7 / 8, 0, np.pi / 2]),
     )
+    drop_zone = Box(
+        name="drop_zone",
+        init_pos=[0.6, 0.0, -0.01],
+        rgba=[1.0, 1.0, 1.0, 1.0],
+        init_quat=[0.0, 1.0, 0.0, 0.0],
+        size=[0.6, 0.6, 0.005],
+        static=True,
+    )
+    wall = Box(
+        name="wall",
+        init_pos=[1.2, 0.0, 0.35],
+        rgba=[1.0, 1.0, 1.0, 0.1],
+        init_quat=[0.0, 1.0, 0.0, 0.0],
+        size=[0.005, 1.2, 0.4],
+        static=True,
+    )
 
     for i in range(settings.database_size):
 
@@ -35,32 +51,12 @@ def generate(cfg_gen: DictConfig):
 
         scene.object_list = []
         scene.name2id_map = {}  # dict mapping names to obj_ids
-        scene._objects = UniqueDict(
-            err_msg="Duplicate object name:"
-        )  # dict mapping names to object instances
-        scene.add_object(cam)
+        scene._objects = {}
 
-        # ### Adding wall and platform ###
-        scene.add_object(
-            Box(
-                name="drop_zone",
-                init_pos=[0.6, 0.0, -0.01],
-                rgba=[1.0, 1.0, 1.0, 1.0],
-                init_quat=[0.0, 1.0, 0.0, 0.0],
-                size=[0.6, 0.6, 0.005],
-                static=True,
-            )
-        )
-        scene.add_object(
-            Box(
-                name="wall",
-                init_pos=[1.2, 0.0, 0.35],
-                rgba=[1.0, 1.0, 1.0, 0.1],
-                init_quat=[0.0, 1.0, 0.0, 0.0],
-                size=[0.005, 1.2, 0.4],
-                static=True,
-            )
-        )
+        # ### Adding camera, wall and platform ###
+        scene.add_object(cam)
+        scene.add_object(drop_zone)
+        scene.add_object(wall)
 
         scene.start()
 
@@ -123,4 +119,6 @@ def generate(cfg_gen: DictConfig):
         )
 
         # ### Restoring state ###
-        p.resetSimulation(scene.physics_client_id)
+        p.resetSimulation(
+            scene.physics_client_id
+        )  # Only generator choice is pybullet ...

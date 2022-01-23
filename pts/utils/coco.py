@@ -10,11 +10,12 @@ import torch
 import torch._six
 import torch.utils.data
 import torchvision
-import utils
 from pycocotools import mask as coco_mask
 from pycocotools.coco import COCO
 from pycocotools.cocoeval import COCOeval
 from torchvision.transforms import functional as F
+
+import pts.utils
 
 
 def _flip_coco_person_keypoints(kps, width):

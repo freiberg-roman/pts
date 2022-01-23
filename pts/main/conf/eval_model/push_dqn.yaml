@@ -3,7 +3,7 @@ discount: 0.99
 seed: 0
 
 train:
-  maximum_iterations: 1'000'000
+  maximum_iterations: 1000000
   lr: 0.0001
   gamma: 0.99
   rg_model: ""

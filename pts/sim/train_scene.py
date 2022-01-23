@@ -4,7 +4,9 @@ import pybullet as p
 from alr_sim.sims.SimFactory import SimRepository
 from alr_sim.sims.universal_sim.PrimitiveObjects import Box
 from alr_sim.utils.unique_dict import UniqueDict
-from utils.sim_helper import create_clutter
+from alr_sim.utils.geometric_transformation import quat2mat
+
+from pts.utils.sim_helper import create_clutter
 
 
 class TrainScene:
@@ -12,8 +14,9 @@ class TrainScene:
         self.min_obj = settings.min_number_objects
         self.max_obj = settings.max_number_objects
         self.total_num = settings.total_number_objects
-        self.ws_limits = settings.workspace_limits
+        self.ws_limits = settings.workspace_limit
         self.drop_height = settings.drop_height
+        self.path = settings.object_path
 
         # ### Scene creating ###
 
@@ -34,6 +37,17 @@ class TrainScene:
         )  # dict mapping names to object instances
         self.scene.add_object(self.cam)
 
+        pos, rot_quat = self.cam.get_cart_pos_quat()
+        self.cam_rot_mat = quat2mat(rot_quat)
+
+        cam_trans = np.eye(4, 4)
+        cam_trans[0:3, 3] = np.asarray(pos)
+        rotation = np.eye(4, 4)
+        rotation[0:3, 0:3] = self.cam_rot_mat
+
+        self.cam_pose = np.dot(cam_trans, rotation)
+        self.cam_intrinsics = ((self.cam.fx, self.cam.cx), (self.cam.fy, self.cam.cy))
+
         # ### Adding wall and platform ###
         self.scene.add_object(
             Box(
@@ -55,9 +69,6 @@ class TrainScene:
                 static=True,
             )
         )
-        self.scene.start()
-
-        self._origin_pos = self.robot.current_j_pos
         self._duration = 2
 
     def create_testing_scenario(self, it=0):
@@ -68,9 +79,7 @@ class TrainScene:
 
         self.scene.object_list = []
         self.scene.name2id_map = {}  # dict mapping names to obj_ids
-        self.scene._objects = UniqueDict(
-            err_msg="Duplicate object name:"
-        )  # dict mapping names to object instances
+        self.scene._objects = {}
         self.scene.add_object(self.cam)
 
         # ### Adding wall and platform ###
@@ -96,6 +105,7 @@ class TrainScene:
         )
 
         self.scene.start()
+        self._origin_pos = self.robot.current_j_pos
 
         # ### Generation ###
 
@@ -115,8 +125,12 @@ class TrainScene:
         color, depth = self.scene.get_cage_cam().get_image(depth=True)
         return color, depth
 
+    def get_data_mask_rg(self):
+        gt = self.scene.get_cage_cam().get_segmentation()[0]
+        return gt, -1
+
     def move_to(
-        self, tool_position, tool_orientation, beam=False, duration=None, nsteps=10
+        self, tool_position, tool_orientation, beam=False, duration=None, nsteps=1
     ):
         tool_orientation = 0 if tool_position is None else tool_orientation
         duration = self._duration if duration is None else duration
@@ -163,7 +177,7 @@ class TrainScene:
         location_above_pushing_point = (pos[0], pos[1], pos[2] + pushing_point_margin)
 
         # goto position before pushing
-        self.move_to(location_above_pushing_point, tool_rotation_angle, beam=True)
+        self.move_to(location_above_pushing_point, tool_rotation_angle)
 
         # close gripper
         self.robot.set_gripper_width = 0.0
@@ -184,7 +198,6 @@ class TrainScene:
         self.move_to(
             [target_x, target_y, pos[2]],
             tool_rotation_angle,
-            pos_ctrl=False,
             duration=self._duration,
         )
 

@@ -380,7 +380,6 @@ class MaskRG:
         with torch.no_grad():
             tt = T.ToTensor()
             depth_tensor = tt(depth_image)
-            depth_tensor = depth_tensor.cuda()
             self.prediction = self.model.eval_single_img([depth_tensor])
 
         self.gt = gt_segmentation
