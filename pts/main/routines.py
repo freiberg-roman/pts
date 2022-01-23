@@ -103,9 +103,7 @@ def train_dqn(cfg_dqn, cfg_rg, cfg_env):
 
         prev_pix_ind = best_pix_ind
         if it > 0 and not exploration:
-            best_pix_ind = np.unravel_index(
-                np.argmax(push_pred), push_pred.shape
-            )
+            best_pix_ind = np.unravel_index(np.argmax(push_pred), push_pred.shape)
         else:
             best_pix_ind = (
                 np.random.random_integers(0, 15),

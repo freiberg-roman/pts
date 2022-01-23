@@ -3,8 +3,8 @@ import numpy as np
 import pybullet as p
 from alr_sim.sims.SimFactory import SimRepository
 from alr_sim.sims.universal_sim.PrimitiveObjects import Box
-from alr_sim.utils.unique_dict import UniqueDict
 from alr_sim.utils.geometric_transformation import quat2mat
+from alr_sim.utils.unique_dict import UniqueDict
 
 from pts.utils.sim_helper import create_clutter
 
