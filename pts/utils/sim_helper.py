@@ -50,5 +50,5 @@ def create_clutter(
             robot.nextStep()
 
     # wait a little bit, once all the objects were dropped
-    for _ in range(4096):
+    for _ in range(256):
         robot.nextStep()

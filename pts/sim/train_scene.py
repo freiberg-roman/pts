@@ -160,6 +160,7 @@ class TrainScene:
         )
 
     def push(self, pos, heightmap_rotation_angle):
+        return
         tool_rotation_angle = (heightmap_rotation_angle % np.pi) - np.pi / 2
         pos[2] += 0.1
 
@@ -177,7 +178,7 @@ class TrainScene:
         location_above_pushing_point = (pos[0], pos[1], pos[2] + pushing_point_margin)
 
         # goto position before pushing
-        self.move_to(location_above_pushing_point, tool_rotation_angle)
+        self.move_to(location_above_pushing_point, tool_rotation_angle, beam=True)
 
         # close gripper
         self.robot.set_gripper_width = 0.0

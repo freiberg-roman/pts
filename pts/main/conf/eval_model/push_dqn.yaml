@@ -1,6 +1,7 @@
 success_threshold: 0.8
 discount: 0.99
 seed: 0
+explore_probability: 0.1
 
 train:
   maximum_iterations: 1000000
