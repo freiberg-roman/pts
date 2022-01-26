@@ -247,8 +247,6 @@ def get_heightmap(
     depth_heightmap = depth_heightmap - z_bottom
     depth_heightmap[depth_heightmap < 0] = 0
     depth_heightmap[depth_heightmap == -z_bottom] = np.nan
-    # plt.imshow(depth_heightmap)
-    asd = 123
     return color_heightmap, depth_heightmap
 
 

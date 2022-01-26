@@ -342,15 +342,6 @@ class ReinforcementNet(nn.Module):
                 ]
             )
         )
-        # self.graspnet = nn.Sequential(OrderedDict([
-        #     ('grasp-norm0', nn.BatchNorm2d(2048)),
-        #     ('grasp-relu0', nn.ReLU(inplace=True)),
-        #     ('grasp-conv0', nn.Conv2d(2048, 64, kernel_size=1, stride=1, bias=False)),
-        #     ('grasp-norm1', nn.BatchNorm2d(64)),
-        #     ('grasp-relu1', nn.ReLU(inplace=True)),
-        #     ('grasp-conv1', nn.Conv2d(64, 1, kernel_size=1, stride=1, bias=False))
-        #     # ('grasp-upsample2', nn.Upsample(scale_factor=4, mode='bilinear'))
-        # ]))
 
         # Initialize network weights
         for m in self.named_modules():
@@ -375,7 +366,7 @@ class ReinforcementNet(nn.Module):
 
         if is_volatile:
             with torch.no_grad():
-                output_prob = []
+                self.output_prob = []
 
                 # Apply rotations to images
                 for rotate_idx in range(self.num_rotations):
@@ -462,7 +453,7 @@ class ReinforcementNet(nn.Module):
                             interm_push_feat.data.size(),
                         )
 
-                    output_prob.append(
+                    self.output_prob.append(
                         [
                             nn.Upsample(scale_factor=16, mode="bilinear").forward(
                                 F.grid_sample(
@@ -475,7 +466,7 @@ class ReinforcementNet(nn.Module):
                         ]
                     )
 
-            return output_prob  # , interm_feat
+            return self.output_prob  # , interm_feat
 
         else:
             self.output_prob = []

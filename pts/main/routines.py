@@ -36,6 +36,7 @@ def train_dqn(cfg_dqn, cfg_rg, cfg_env):
             )
 
     def push_position_and_rotation(first_loop=False):
+        global best_pix_ind
         mask_rg_net.set_reward_generator(depth_img, seg)
         pred_ids, seg_rew, err = mask_rg_net.get_current_rewards()
         color_heightmap, depth_heightmap = get_heightmap(
@@ -55,6 +56,8 @@ def train_dqn(cfg_dqn, cfg_rg, cfg_env):
         )
         if not first_loop:
             prev_pix_ind = best_pix_ind  # TODO
+        else:
+            prev_pix_ind = None
 
         best_pix_ind = best_push_prediction(push_pred, exploration=True)
         best_rot_angle = np.deg2rad(best_pix_ind[0] * (360.0 / trainer.model.num_rotations))
@@ -86,7 +89,7 @@ def train_dqn(cfg_dqn, cfg_rg, cfg_env):
 
         prim_pos[2] = safe_z_position
         prim_pos[2] = safe_z_position
-        return prim_pos, best_rot_angle, color_heightmap, valid_depth_heightmap
+        return prim_pos, best_rot_angle, color_heightmap, valid_depth_heightmap, prev_pix_ind
 
     # ### Main loop including initial run ###
 
@@ -115,6 +118,10 @@ def train_dqn(cfg_dqn, cfg_rg, cfg_env):
 
         # ### Execute Push ###
 
+        if not iter == 0:
+            prev_valid_depth_heightmap = valid_depth_heightmap
+        else:
+            prev_valid_depth_heightmap = 0
         prim_pos, best_rot_angle, color_heightmap, valid_depth_heightmap, prev_pix_ind= push_position_and_rotation()
         train_scene.push(prim_pos, best_rot_angle)
 
@@ -138,7 +145,11 @@ def train_dqn(cfg_dqn, cfg_rg, cfg_env):
         # ### Compute rewards from segmentation ###
 
         mask_rg_net.set_reward_generator(depth_img, seg)
-        prev_seg_reward = seg_reward
+        if not iter == 0:
+            prev_seg_reward = seg_reward
+        else:
+            prev_seg_reward = 0
+
         pred_ids, seg_reward, err_rate = mask_rg_net.get_current_rewards()
 
         # ### Compute change for evaluation ###
@@ -147,7 +158,7 @@ def train_dqn(cfg_dqn, cfg_rg, cfg_env):
             color_heightmap, valid_depth_heightmap, is_volatile=True
         )
 
-        diff_depth = abs(valid_depth_heightmap - prev_depth_img)
+        diff_depth = abs(valid_depth_heightmap - prev_valid_depth_heightmap)
         diff_depth[diff_depth > 0] = 1
         change_detected = np.sum(diff_depth) > cfg_dqn.change_threshold
         success_action = seg_reward > success_threshold
