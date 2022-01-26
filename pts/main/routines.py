@@ -31,12 +31,13 @@ def train_dqn(cfg_dqn, cfg_rg, cfg_env):
         else:
             return (
                 np.random.random_integers(0, 15),
-                np.random.random_integers(0, 150),
-                np.random.random_integers(75),
+                np.random.random_integers(0, 224 - 1),
+                np.random.random_integers(0, 224 - 1),
             )
 
     def push_position_and_rotation(first_loop=False):
         global best_pix_ind
+        global pred_ids, seg_rew, err
         mask_rg_net.set_reward_generator(depth_img, seg)
         pred_ids, seg_rew, err = mask_rg_net.get_current_rewards()
         color_heightmap, depth_heightmap = get_heightmap(
@@ -109,6 +110,7 @@ def train_dqn(cfg_dqn, cfg_rg, cfg_env):
     depth_img[depth_img == 0] = 0.8
     depth_img = depth_img * 5000
 
+    pred_ids, seg_rew, err = [[0, 0],[0, 0]], 0, 0
     prim_pos, best_rot_angle, _, _, prev_pix_ind = push_position_and_rotation(first_loop=True)
     train_scene.push(prim_pos, best_rot_angle)
 
@@ -122,7 +124,7 @@ def train_dqn(cfg_dqn, cfg_rg, cfg_env):
             prev_valid_depth_heightmap = valid_depth_heightmap
         else:
             prev_valid_depth_heightmap = 0
-        prim_pos, best_rot_angle, color_heightmap, valid_depth_heightmap, prev_pix_ind= push_position_and_rotation()
+        prim_pos, best_rot_angle, color_heightmap, valid_depth_heightmap, prev_pix_ind = push_position_and_rotation()
         train_scene.push(prim_pos, best_rot_angle)
 
         # ### Get Image ###
@@ -137,7 +139,7 @@ def train_dqn(cfg_dqn, cfg_rg, cfg_env):
         color_img = cv2.resize(color_img, dim, interpolation=cv2.INTER_AREA)
         depth_img = cv2.resize(depth_img, dim, interpolation=cv2.INTER_AREA)
         seg = cv2.resize(np.uint8(seg), dim, interpolation=cv2.INTER_NEAREST)
-        seg[seg == 1] = 0
+        seg[seg == 2] = 0  # two stands for table
         depth_img[depth_img > 1.50] = 0
         depth_img[depth_img == 0] = 0.8
         depth_img = depth_img * 5000
@@ -146,22 +148,15 @@ def train_dqn(cfg_dqn, cfg_rg, cfg_env):
 
         mask_rg_net.set_reward_generator(depth_img, seg)
         if not iter == 0:
-            prev_seg_reward = seg_reward
+            prev_seg_reward = seg_rew
         else:
             prev_seg_reward = 0
 
-        pred_ids, seg_reward, err_rate = mask_rg_net.get_current_rewards()
-
         # ### Compute change for evaluation ###
-
-        push_pred = trainer.forward(
-            color_heightmap, valid_depth_heightmap, is_volatile=True
-        )
-
         diff_depth = abs(valid_depth_heightmap - prev_valid_depth_heightmap)
         diff_depth[diff_depth > 0] = 1
         change_detected = np.sum(diff_depth) > cfg_dqn.change_threshold
-        success_action = seg_reward > success_threshold
+        success_action = seg_rew > success_threshold
 
         if success_action:
             print("Success after:", iter, " iterations.")
@@ -173,7 +168,7 @@ def train_dqn(cfg_dqn, cfg_rg, cfg_env):
             color_heightmap,
             valid_depth_heightmap,
             prev_seg_reward,
-            seg_reward,
+            seg_rew,
             change_detected,
         )
         loss_val = trainer.backprop(prev_pix_ind, label_val)

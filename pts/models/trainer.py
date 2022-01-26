@@ -139,7 +139,7 @@ class Trainer(object):
         loss = self.criterion(self.model.output_prob[0][0].view(1, 320, 320),
                               Variable(torch.from_numpy(label).float())) * Variable(
             torch.from_numpy(label_weights).float(),
-            requires_grad=False)
+            requires_grad=True)
         loss = loss.sum()
         loss.backward()
         loss_value = loss.cpu().data.numpy()

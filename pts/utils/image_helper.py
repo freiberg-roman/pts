@@ -166,9 +166,6 @@ def get_heightmap(
     workspace_limits,
     heightmap_resolution,
 ):
-    # fig = plt.figure()
-    # ax = plt.axes(projection="3d")
-
     # Compute heightmap size
     heightmap_size = np.round(
         (
