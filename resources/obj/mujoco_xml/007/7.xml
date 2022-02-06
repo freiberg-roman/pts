@@ -1,10 +1,13 @@
-<mujoco model="7.urdf">
+<mujoco model="rnd_7">
     <compiler angle="radian" />
     <size njmax="500" nconmax="100" />
     <asset>
         <mesh name="7" file="7.stl" />
     </asset>
     <worldbody>
-        <geom quat="0.5 0.5 -0.5 -0.5" type="mesh" rgba="1 1 0.4 1" mesh="7" />
+        <body name="rnd_7" pos="0.55 0.0 0.8" quat="0.0 1.0 0.0 0.0">
+            <freejoint name="7:joint" />
+            <geom quat="0.5 0.5 -0.5 -0.5" type="mesh" rgba="0 1 1 1" mesh="7" density="500" friction="1" />
+        </body>
     </worldbody>
 </mujoco>

@@ -112,13 +112,68 @@ def create_scene():
         )
     )
 
+    obj1 = MujocoObject("test",
+                 [0.55, 0.0, 0.3],
+                 [0.0, 1.0, 0.0, 0.0],
+                 obj_path=os.path.dirname(os.path.abspath(__file__)) + "/../../resources/obj/mujoco_xml/000/0.xml"
+                 )
+    obj2 = MujocoObject("test2",
+                        [0.55, 0.0, 0.4],
+                        [0.0, 1.0, 0.0, 0.0],
+                        obj_path=os.path.dirname(os.path.abspath(__file__)) + "/../../resources/obj/mujoco_xml/001/1.xml"
+                        )
+    obj3 = MujocoObject("test3",
+                        [0.55, 0.0, 0.5],
+                        [0.0, 1.0, 0.0, 0.0],
+                        obj_path=os.path.dirname(os.path.abspath(__file__)) + "/../../resources/obj/mujoco_xml/002/2.xml"
+                        )
+    obj4 = MujocoObject("test4",
+                        [0.55, 0.0, 0.6],
+                        [0.0, 1.0, 0.0, 0.0],
+                        obj_path=os.path.dirname(os.path.abspath(__file__)) + "/../../resources/obj/mujoco_xml/003/3.xml"
+                        )
+    obj5 = MujocoObject("test5",
+                        [0.55, 0.0, 0.7],
+                        [0.0, 1.0, 0.0, 0.0],
+                        obj_path=os.path.dirname(os.path.abspath(__file__)) + "/../../resources/obj/mujoco_xml/004/4.xml"
+                        )
+    obj6 = MujocoObject("test6",
+                        [0.55, 0.0, 0.8],
+                        [0.0, 1.0, 0.0, 0.0],
+                        obj_path=os.path.dirname(os.path.abspath(__file__)) + "/../../resources/obj/mujoco_xml/005/5.xml"
+                        )
+    obj7 = MujocoObject("test7",
+                        [0.55, 0.0, 0.8],
+                        [0.0, 1.0, 0.0, 0.0],
+                        obj_path=os.path.dirname(os.path.abspath(__file__)) + "/../../resources/obj/mujoco_xml/006/6.xml"
+                        )
+    obj8 = MujocoObject("test8",
+                        [0.55, 0.0, 0.8],
+                        [0.0, 1.0, 0.0, 0.0],
+                        obj_path=os.path.dirname(os.path.abspath(__file__)) + "/../../resources/obj/mujoco_xml/007/7.xml"
+                        )
     scene.add_object(
-        MujocoObject("test",
-                     [0.3, 0.0, 0.3],
-                     [0.0, 1.0, 0.0, 0.0],
-                     obj_path=os.path.dirname(os.path.abspath(__file__)) + "/../../resources/obj/random_urdfs/000/000.xml"
-                     )
+        obj1
     )
+    scene.add_object(
+        obj2
+    )
+    scene.add_object(
+        obj3
+    )
+    scene.add_object(
+        obj4
+    )
+    scene.add_object(
+        obj5
+    )
+    scene.add_object(
+        obj6
+    )
+    scene.add_object(
+        obj7
+    )
+    scene.add_object(obj8)
 
     scene.start()
     return scene, robot
