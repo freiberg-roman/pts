@@ -1,0 +1,10 @@
+<mujoco model="blob002">
+    <compiler angle="radian" />
+    <size njmax="500" nconmax="100" />
+    <asset>
+        <mesh name="002_coll" file="002_coll.stl" scale="0.0071 0.0071 0.0071" />
+    </asset>
+    <worldbody>
+        <geom type="mesh" rgba="0.11 0.63 0.41 1" mesh="002_coll" />
+    </worldbody>
+</mujoco>

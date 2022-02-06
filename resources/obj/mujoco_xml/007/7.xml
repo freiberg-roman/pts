@@ -1,0 +1,10 @@
+<mujoco model="7.urdf">
+    <compiler angle="radian" />
+    <size njmax="500" nconmax="100" />
+    <asset>
+        <mesh name="7" file="7.stl" />
+    </asset>
+    <worldbody>
+        <geom quat="0.5 0.5 -0.5 -0.5" type="mesh" rgba="1 1 0.4 1" mesh="7" />
+    </worldbody>
+</mujoco>

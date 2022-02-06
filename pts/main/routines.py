@@ -56,29 +56,31 @@ def train_dqn(cfg_dqn, cfg_rg, cfg_env):
             color_heightmap, valid_depth_heightmap, is_volatile=True
         )
         if not first_loop:
-            prev_pix_ind = best_pix_ind  # TODO
+            prev_pix_ind = best_pix_ind
         else:
             prev_pix_ind = None
 
         best_pix_ind = best_push_prediction(push_pred, exploration=True)
-        best_rot_angle = np.deg2rad(best_pix_ind[0] * (360.0 / trainer.model.num_rotations))
+        best_rot_angle = np.deg2rad(
+            best_pix_ind[0] * (360.0 / trainer.model.num_rotations)
+        )
 
         prim_pos = [
             best_pix_ind[2] * heightmap_res + ws_limits[0][0],
             best_pix_ind[1] * heightmap_res + ws_limits[1][0],
             valid_depth_heightmap[best_pix_ind[1]][best_pix_ind[2]] + ws_limits[2][0],
-            ]
+        ]
         safe_kernel_width = int(
             np.round((0.02 / 2) / heightmap_res)
         )  # 0.02 is the finger width
         local_region = valid_depth_heightmap[
-                       max(best_pix_ind[1] - safe_kernel_width, 0): min(
-                           best_pix_ind[1] + safe_kernel_width + 1, valid_depth_heightmap.shape[0]
-                       ),
-                       max(best_pix_ind[2] - safe_kernel_width, 0): min(
-                           best_pix_ind[2] + safe_kernel_width + 1, valid_depth_heightmap.shape[1]
-                       ),
-                       ]
+            max(best_pix_ind[1] - safe_kernel_width, 0) : min(
+                best_pix_ind[1] + safe_kernel_width + 1, valid_depth_heightmap.shape[0]
+            ),
+            max(best_pix_ind[2] - safe_kernel_width, 0) : min(
+                best_pix_ind[2] + safe_kernel_width + 1, valid_depth_heightmap.shape[1]
+            ),
+        ]
         if local_region.size == 0:
             safe_z_position = ws_limits[2][0]
         elif np.max(local_region) > 0.02:
@@ -90,7 +92,13 @@ def train_dqn(cfg_dqn, cfg_rg, cfg_env):
 
         prim_pos[2] = safe_z_position
         prim_pos[2] = safe_z_position
-        return prim_pos, best_rot_angle, color_heightmap, valid_depth_heightmap, prev_pix_ind
+        return (
+            prim_pos,
+            best_rot_angle,
+            color_heightmap,
+            valid_depth_heightmap,
+            prev_pix_ind,
+        )
 
     # ### Main loop including initial run ###
 
@@ -110,8 +118,10 @@ def train_dqn(cfg_dqn, cfg_rg, cfg_env):
     depth_img[depth_img == 0] = 0.8
     depth_img = depth_img * 5000
 
-    pred_ids, seg_rew, err = [[0, 0],[0, 0]], 0, 0
-    prim_pos, best_rot_angle, _, _, prev_pix_ind = push_position_and_rotation(first_loop=True)
+    pred_ids, seg_rew, err = [[0, 0], [0, 0]], 0, 0
+    prim_pos, best_rot_angle, _, _, prev_pix_ind = push_position_and_rotation(
+        first_loop=True
+    )
     train_scene.push(prim_pos, best_rot_angle)
 
     # ### Loop ###
@@ -124,7 +134,13 @@ def train_dqn(cfg_dqn, cfg_rg, cfg_env):
             prev_valid_depth_heightmap = valid_depth_heightmap
         else:
             prev_valid_depth_heightmap = 0
-        prim_pos, best_rot_angle, color_heightmap, valid_depth_heightmap, prev_pix_ind = push_position_and_rotation()
+        (
+            prim_pos,
+            best_rot_angle,
+            color_heightmap,
+            valid_depth_heightmap,
+            prev_pix_ind,
+        ) = push_position_and_rotation()
         train_scene.push(prim_pos, best_rot_angle)
 
         # ### Get Image ###
