@@ -5,7 +5,7 @@
         <mesh name="1_vhacd" file="1_vhacd.stl" />
     </asset>
     <worldbody>
-        <body name="rnd_1" pos="0.55 0.0 0.4" quat="0.0 1.0 0.0 0.0">
+        <body name="rnd_1" pos="0.3833671736347385 0.097285990761437 0.015364921056127285" quat="0.035372638207063656 -0.7065920460513654 0.035397362977717235 0.7058494766006711">
             <freejoint name="1:joint" />
             <geom quat="0.707107 0 -0.707107 0" type="mesh" rgba="1 0 1 1" mesh="1_vhacd" density="500" friction="1" />
         </body>

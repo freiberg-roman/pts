@@ -2,23 +2,32 @@
 Simple setting for performing predefined push actions
 """
 import os
+import xml.etree.ElementTree as Et
+from shutil import copyfile
+from xml.etree.ElementTree import Element
 
 import alr_sim.utils.geometric_transformation as gt
+import mujoco_py
 import numpy as np
 import pybullet as p
 from alr_sim.core.Logger import RobotPlotFlags
+from alr_sim.sims.mujoco.mj_utils.mujoco_scene_object import MujocoObject
+from alr_sim.sims.mujoco.mj_utils.mujoco_viewer import MujocoViewer
 from alr_sim.sims.mujoco.MujocoCamera import MujocoCamera
 from alr_sim.sims.mujoco.MujocoFactory import MujocoFactory
+from alr_sim.sims.mujoco.MujocoLoadable import MujocoXmlLoadable
 from alr_sim.sims.mujoco.MujocoRobot import MujocoRobot
 from alr_sim.sims.mujoco.MujocoScene import MujocoScene
 from alr_sim.sims.SimFactory import SimRepository
-from alr_sim.sims.mujoco.mj_utils.mujoco_scene_object import MujocoObject
 from alr_sim.sims.universal_sim.PrimitiveObjects import Box
 from alr_sim.utils.geometric_transformation import quat2mat
-from alr_sim.sims.mujoco.MujocoLoadable import MujocoXmlLoadable
+from mujoco_py import MjSim
+
+base_path = "/home/roman/projects/SimulationFramework/models/mujoco/surroundings/"
+
 
 def create_clutter(
-        scene, robot, min, max, total, limits, drop_height, obj_path, iter=0
+    scene, robot, min, max, total, limits, drop_height, obj_path, iter=0
 ):
     num_obj = np.random.random_integers(min, max)
 
@@ -41,7 +50,7 @@ def create_clutter(
             2 * np.pi * np.random.random_sample(),
             2 * np.pi * np.random.random_sample(),
             2 * np.pi * np.random.random_sample(),
-            ]
+        ]
 
         pb_obj = PyBulletObject(
             urdf_name="%03d" % obj_id,
@@ -49,9 +58,9 @@ def create_clutter(
             position=obj_pos,
             orientation=obj_orientation,
             data_dir=os.path.dirname(os.path.abspath(__file__))
-                     + "/../../"
-                     + obj_path
-                     + "%03d" % obj_id,
+            + "/../../"
+            + obj_path
+            + "%03d" % obj_id,
         )
 
         print("dropping  -->", pb_obj)
@@ -66,14 +75,116 @@ def create_clutter(
     for _ in range(256):
         robot.nextStep()
 
+
 def load_obj(order):
     obj_list = []
     for item in order:
         obj = MujocoXmlLoadable()
-        obj.xml_file_path = os.path.abspath(__file__) + "/../resources/obj/random_urdfs/" + "%03d" % item + "/" + "%03d.xml" % item
+        obj.xml_file_path = (
+            os.path.abspath(__file__)
+            + "/../resources/obj/random_urdfs/"
+            + "%03d" % item
+            + "/"
+            + "%03d.xml" % item
+        )
         obj_list.append(obj)
 
     return obj_list
+
+
+def freeze(scene, freezable):
+    """
+    Saves current scene to xml -> enables position setting
+    Returns: nothing
+
+    """
+    file = open(base_path + "test.xml", mode="w")
+    scene.sim.save(file, "xml")
+    file.close()
+
+    etree = Et.parse(base_path + "test.xml")
+    for obj in freezable:
+
+        root = etree.getroot()
+        body_element = root.find(".//*[@name='%s']" % obj.name)
+
+        pos_str = " ".join(map(str, scene._get_obj_pos(obj.name, obj)))
+        obj.pos = scene._get_obj_pos(obj.name, obj)
+        obj.quat = scene._get_obj_quat(obj.name, obj)
+        quat_str = " ".join(map(str, scene._get_obj_quat(obj.name, obj)))
+
+        body_element.set("pos", pos_str)
+        body_element.set("quat", quat_str)
+
+    etree.write(base_path + "test.xml")
+    return freezable
+
+
+def unfreeze(scene, robot, freezable):
+    """
+    Unfreeze basically reloads the whole scene -> does all the reconstruction
+    Args:
+        scene:
+
+    Returns:
+
+    """
+    del scene, robot
+    mujoco_factory = MujocoFactory()
+    scene = mujoco_factory.create_scene()
+    robot = mujoco_factory.create_robot(scene)
+    cam = mujoco_factory.create_camera(
+        "cage_cam",
+        512,
+        384,
+        [0.7, 0.0, 0.5 + 0.7],
+        gt.euler2quat([-np.pi * 7 / 8, 0, np.pi / 2]),
+    )
+    scene.add_object(cam)
+
+    scene.add_object(
+        Box(
+            name="drop_zone",
+            init_pos=[0.6, 0.0, -0.01],
+            rgba=[1.0, 1.0, 1.0, 1.0],
+            init_quat=[0.0, 1.0, 0.0, 0.0],
+            size=[0.6, 0.6, 0.005],
+            static=True,
+        )
+    )
+    scene.add_object(
+        Box(
+            name="wall",
+            init_pos=[1.2, 0.0, 0.35],
+            rgba=[1.0, 1.0, 1.0, 0.1],
+            init_quat=[0.0, 1.0, 0.0, 0.0],
+            size=[0.005, 1.2, 0.4],
+            static=True,
+        )
+    )
+
+    for obj in freezable:
+        scene.add_object(obj)
+
+    scene.start()
+    return scene, robot
+
+
+def set_pos(obj, pos, quat):
+    etree = Et.parse(base_path + "test.xml")
+    root = etree.getroot()
+    pos_str = " ".join(map(str, pos))
+    quat_str = " ".join(map(str, quat))
+
+    body_element = root.find(".//*[@name='%s']" % obj.name)
+    body_element.set("pos", pos_str)
+    body_element.set("quat", quat_str)
+    obj.quat = quat
+    obj.pos = pos
+
+    # ### WRITE BACK ###
+    etree.write(base_path + "test.xml")
+
 
 def create_scene():
     num_obj = np.random.random_integers(0, 4)
@@ -112,71 +223,75 @@ def create_scene():
         )
     )
 
-    obj1 = MujocoObject("test",
-                 [0.55, 0.0, 0.3],
-                 [0.0, 1.0, 0.0, 0.0],
-                 obj_path=os.path.dirname(os.path.abspath(__file__)) + "/../../resources/obj/mujoco_xml/000/0.xml"
-                 )
-    obj2 = MujocoObject("test2",
-                        [0.55, 0.0, 0.4],
-                        [0.0, 1.0, 0.0, 0.0],
-                        obj_path=os.path.dirname(os.path.abspath(__file__)) + "/../../resources/obj/mujoco_xml/001/1.xml"
-                        )
-    obj3 = MujocoObject("test3",
-                        [0.55, 0.0, 0.5],
-                        [0.0, 1.0, 0.0, 0.0],
-                        obj_path=os.path.dirname(os.path.abspath(__file__)) + "/../../resources/obj/mujoco_xml/002/2.xml"
-                        )
-    obj4 = MujocoObject("test4",
-                        [0.55, 0.0, 0.6],
-                        [0.0, 1.0, 0.0, 0.0],
-                        obj_path=os.path.dirname(os.path.abspath(__file__)) + "/../../resources/obj/mujoco_xml/003/3.xml"
-                        )
-    obj5 = MujocoObject("test5",
-                        [0.55, 0.0, 0.7],
-                        [0.0, 1.0, 0.0, 0.0],
-                        obj_path=os.path.dirname(os.path.abspath(__file__)) + "/../../resources/obj/mujoco_xml/004/4.xml"
-                        )
-    obj6 = MujocoObject("test6",
-                        [0.55, 0.0, 0.8],
-                        [0.0, 1.0, 0.0, 0.0],
-                        obj_path=os.path.dirname(os.path.abspath(__file__)) + "/../../resources/obj/mujoco_xml/005/5.xml"
-                        )
-    obj7 = MujocoObject("test7",
-                        [0.55, 0.0, 0.8],
-                        [0.0, 1.0, 0.0, 0.0],
-                        obj_path=os.path.dirname(os.path.abspath(__file__)) + "/../../resources/obj/mujoco_xml/006/6.xml"
-                        )
-    obj8 = MujocoObject("test8",
-                        [0.55, 0.0, 0.8],
-                        [0.0, 1.0, 0.0, 0.0],
-                        obj_path=os.path.dirname(os.path.abspath(__file__)) + "/../../resources/obj/mujoco_xml/007/7.xml"
-                        )
-    scene.add_object(
-        obj1
+    obj1 = MujocoObject(
+        "rnd_0",
+        [0.55, 0.0, 0.3],
+        [0.0, 1.0, 0.0, 0.0],
+        obj_path=os.path.dirname(os.path.abspath(__file__))
+        + "/../../resources/obj/mujoco_xml/000/0.xml",
     )
-    scene.add_object(
-        obj2
+    obj2 = MujocoObject(
+        "rnd_1",
+        [0.55, 0.0, 0.4],
+        [0.0, 1.0, 0.0, 0.0],
+        obj_path=os.path.dirname(os.path.abspath(__file__))
+        + "/../../resources/obj/mujoco_xml/001/1.xml",
     )
-    scene.add_object(
-        obj3
+    obj3 = MujocoObject(
+        "rnd_2",
+        [0.55, 0.0, 0.5],
+        [0.0, 1.0, 0.0, 0.0],
+        obj_path=os.path.dirname(os.path.abspath(__file__))
+        + "/../../resources/obj/mujoco_xml/002/2.xml",
     )
-    scene.add_object(
-        obj4
+    obj4 = MujocoObject(
+        "rnd_3",
+        [0.55, 0.0, 0.6],
+        [0.0, 1.0, 0.0, 0.0],
+        obj_path=os.path.dirname(os.path.abspath(__file__))
+        + "/../../resources/obj/mujoco_xml/003/3.xml",
     )
-    scene.add_object(
-        obj5
+    obj5 = MujocoObject(
+        "rnd_4",
+        [0.55, 0.0, 0.7],
+        [0.0, 1.0, 0.0, 0.0],
+        obj_path=os.path.dirname(os.path.abspath(__file__))
+        + "/../../resources/obj/mujoco_xml/004/4.xml",
     )
-    scene.add_object(
-        obj6
+    obj6 = MujocoObject(
+        "rnd_5",
+        [0.55, 0.0, 0.8],
+        [0.0, 1.0, 0.0, 0.0],
+        obj_path=os.path.dirname(os.path.abspath(__file__))
+        + "/../../resources/obj/mujoco_xml/005/5.xml",
     )
-    scene.add_object(
-        obj7
+    obj7 = MujocoObject(
+        "rnd_6",
+        [0.55, 0.0, 0.8],
+        [0.0, 1.0, 0.0, 0.0],
+        obj_path=os.path.dirname(os.path.abspath(__file__))
+        + "/../../resources/obj/mujoco_xml/006/6.xml",
     )
+    obj8 = MujocoObject(
+        "rnd_7",
+        [0.55, 0.0, 0.8],
+        [0.0, 1.0, 0.0, 0.0],
+        obj_path=os.path.dirname(os.path.abspath(__file__))
+        + "/../../resources/obj/mujoco_xml/007/7.xml",
+    )
+    scene.add_object(obj1)
+    scene.add_object(obj2)
+    scene.add_object(obj3)
+    scene.add_object(obj4)
+    scene.add_object(obj5)
+    scene.add_object(obj6)
+    scene.add_object(obj7)
     scene.add_object(obj8)
 
+    freezable = [obj1, obj2, obj3, obj4, obj5, obj6, obj7]
+
     scene.start()
-    return scene, robot
+    return scene, robot, freezable
 
 
 def push_at(robot, x, y, height=0.5, intermediate_steps=15):
@@ -208,7 +323,7 @@ def push_at(robot, x, y, height=0.5, intermediate_steps=15):
 def run():
     # ### Creating scene ###
     # workspace limits are x: [0.3, 0.9], y: [-0.6, 0.6]
-    scene, robot = create_scene()
+    scene, robot, freezable = create_scene()
     robot.set_gripper_width = 0.0
 
     # ### Create clutter ###
@@ -217,6 +332,10 @@ def run():
     push_at(robot, 0.5, 0.0)
 
     # ### Save positions of objects ###
+    freezable = freeze(scene, freezable)  # should be a python context
+    set_pos(freezable[-1], [0.55, 0.0, 0.4], [0.0, 1.0, 0.0, 0.0])
+    scene, robot = unfreeze(scene, robot, freezable)
+    push_at(robot, 0.5, 0.0)
 
     # ### Reset scene ###
     scene.reset()

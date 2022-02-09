@@ -1,0 +1,282 @@
+<mujoco model="base_surrounding">
+    <compiler angle="radian" meshdir="../robots/meshes/panda/" />
+    <option timestep="0.001" impratio="3" tolerance="1e-10" cone="elliptic" />
+    <size njmax="500" nconmax="100" />
+    <visual>
+        <global offwidth="2560" offheight="1403" />
+        <map znear="0.001" zfar="1000" />
+    </visual>
+    <default class="main">
+        <default class="panda:gripper">
+            <joint type="slide" limited="true" range="0 0.04" damping="10" />
+            <geom type="box" condim="4" solimp="0.998 0.999 0.001 0.5 2" margin="0.001" />
+        </default>
+    </default>
+    <asset>
+        <texture type="skybox" builtin="gradient" rgb1="0.26 0.58 0.51" rgb2="0.26 0.58 0.51" width="32" height="192" />
+        <mesh name="0" file="0.stl" />
+        <mesh name="1_vhacd" file="1_vhacd.stl" />
+        <mesh name="2" file="2.stl" />
+        <mesh name="3" file="3.stl" />
+        <mesh name="4" file="4.stl" />
+        <mesh name="5" file="5.stl" scale="0.93 0.93 1" />
+        <mesh name="6" file="6.stl" />
+        <mesh name="7" file="7.stl" />
+        <mesh name="link0v" file="link0v.stl" />
+        <mesh name="link1v" file="link1v.stl" />
+        <mesh name="link2v" file="link2v.stl" />
+        <mesh name="link3v" file="link3v.stl" />
+        <mesh name="link4v" file="link4v.stl" />
+        <mesh name="link5v" file="link5v.stl" />
+        <mesh name="link6v" file="link6v.stl" />
+        <mesh name="link7v" file="link7v.stl" />
+        <mesh name="handv" file="handv.stl" />
+        <mesh name="fingerv" file="fingerv.stl" />
+    </asset>
+    <worldbody>
+        <camera name="rgbd_cage" pos="0.7 0.1 0.9" ipd="0" />
+        <light pos="0 0 1.3" dir="0 0 -1" directional="true" cutoff="100" exponent="1" diffuse="1 1 1" specular="0.1 0.1 0.1" />
+        <body name="ground" pos="0 0 -0.94">
+            <geom name="ground:geom1" size="0 0 1" type="plane" rgba="0.26 0.58 0.51 1" />
+        </body>
+        <body pos="0.7 0 1.2">
+            <camera name="cage_cam" pos="0 0 0" />
+        </body>
+        <body name="drop_zone" pos="0.6 0 -0.01" quat="0 1 0 0">
+            <geom size="0.6 0.6 0.005" type="box" rgba="1 1 1 1" />
+        </body>
+        <body name="wall" pos="1.2 0 0.35" quat="0 1 0 0">
+            <geom size="0.005 1.2 0.4" type="box" rgba="1 1 1 0.1" />
+        </body>
+        <body name="table_plane" pos="0.2 0 -0.02">
+            <geom size="0.49 0.98 0.001" type="box" solref="0.002 1" solimp="0.999 0.999 0.001 0.5 2" rgba="0.8 0.655 0.45 1" />
+            <body name="panda_ground" pos="-0.24 0 0.01">
+                <geom size="0.18 0.18 0.01" type="box" rgba="0.9 0.9 0.9 1" />
+            </body>
+            <body name="front_upper" pos="0.49 0 -0.02">
+                <geom size="0.02 0.96 0.02" type="box" rgba="0.9 0.9 0.9 1" />
+            </body>
+            <body name="front_mid" pos="0.49 0 -0.445">
+                <geom size="0.02 0.96 0.02" type="box" rgba="0.9 0.9 0.9 1" />
+            </body>
+            <body name="front_lower" pos="0.49 0 -0.87">
+                <geom size="0.02 0.96 0.02" type="box" rgba="0.9 0.9 0.9 1" />
+            </body>
+            <body name="back_upper" pos="-0.49 0 -0.02">
+                <geom size="0.02 0.96 0.02" type="box" rgba="0.9 0.9 0.9 1" />
+            </body>
+            <body name="back_mid" pos="-0.49 0 -0.445">
+                <geom size="0.02 0.96 0.02" type="box" rgba="0.9 0.9 0.9 1" />
+            </body>
+            <body name="back_lower" pos="-0.49 0 -0.87">
+                <geom size="0.02 0.96 0.02" type="box" rgba="0.9 0.9 0.9 1" />
+            </body>
+            <body name="vert_front_left" pos="0.49 0.98 -0.445">
+                <geom size="0.02 0.02 0.445" type="box" rgba="0.9 0.9 0.9 1" />
+            </body>
+            <body name="vert_front_right" pos="0.49 -0.98 -0.445">
+                <geom size="0.02 0.02 0.445" type="box" rgba="0.9 0.9 0.9 1" />
+            </body>
+            <body name="vert_back_left" pos="-0.49 0.98 -0.445">
+                <geom size="0.02 0.02 0.445" type="box" rgba="0.9 0.9 0.9 1" />
+            </body>
+            <body name="vert_back_right" pos="-0.49 -0.98 -0.445">
+                <geom size="0.02 0.02 0.445" type="box" rgba="0.9 0.9 0.9 1" />
+            </body>
+            <body name="side_upper_right" pos="0 -0.98 -0.02">
+                <geom size="0.47 0.02 0.02" type="box" rgba="0.9 0.9 0.9 1" />
+            </body>
+            <body name="side_lower_right" pos="0 -0.98 -0.87">
+                <geom size="0.47 0.02 0.02" type="box" rgba="0.9 0.9 0.9 1" />
+            </body>
+            <body name="side_upper_left" pos="0 0.98 -0.02">
+                <geom size="0.47 0.02 0.02" type="box" rgba="0.9 0.9 0.9 1" />
+            </body>
+            <body name="side_lower_left" pos="0 0.98 -0.87">
+                <geom size="0.47 0.02 0.02" type="box" rgba="0.9 0.9 0.9 1" />
+            </body>
+            <body name="foot_front_left" pos="0.49 0.98 -0.9">
+                <geom size="0.02 0.02" type="cylinder" rgba="0 0 0 1" />
+            </body>
+            <body name="foot_front_mid" pos="0.49 0 -0.9">
+                <geom size="0.02 0.02" type="cylinder" rgba="0 0 0 1" />
+            </body>
+            <body name="foot_front_right" pos="0.49 -0.98 -0.9">
+                <geom size="0.02 0.02" type="cylinder" rgba="0 0 0 1" />
+            </body>
+            <body name="foot_back_left" pos="-0.49 0.98 -0.9">
+                <geom size="0.02 0.02" type="cylinder" rgba="0 0 0 1" />
+            </body>
+            <body name="foot_back_mid" pos="-0.49 0 -0.9">
+                <geom size="0.02 0.02" type="cylinder" rgba="0 0 0 1" />
+            </body>
+            <body name="foot_back_right" pos="-0.49 -0.98 -0.9">
+                <geom size="0.02 0.02" type="cylinder" rgba="0 0 0 1" />
+            </body>
+            <body name="top_back_left" pos="-0.49 0.98 0.65">
+                <geom size="0.02 0.02 0.65" type="box" rgba="0.9 0.9 0.9 1" />
+            </body>
+            <body name="top_back_right" pos="-0.49 -0.98 0.65">
+                <geom size="0.02 0.02 0.65" type="box" rgba="0.9 0.9 0.9 1" />
+            </body>
+            <body name="top_front" pos="0.49 0 1.28">
+                <geom size="0.02 0.96 0.02" type="box" rgba="0.9 0.9 0.9 1" />
+            </body>
+            <body name="top_back" pos="-0.49 0 1.28">
+                <geom size="0.02 0.96 0.02" type="box" rgba="0.9 0.9 0.9 1" />
+            </body>
+            <body name="top_side_right" pos="0 -0.98 1.28">
+                <geom size="0.51 0.02 0.02" type="box" rgba="0.9 0.9 0.9 1" />
+            </body>
+            <body name="top_side_mid" pos="0 0 1.28">
+                <geom size="0.51 0.02 0.02" type="box" rgba="0.9 0.9 0.9 1" />
+            </body>
+            <body name="top_side_left" pos="0 0.98 1.28">
+                <geom size="0.51 0.02 0.02" type="box" rgba="0.9 0.9 0.9 1" />
+            </body>
+            <body name="rot_lower_right" pos="-0.31 0.98 0.22" quat="0.894427 0 0.447214 0">
+                <geom size="0.3 0.02 0.02" type="box" rgba="0.9 0.9 0.9 1" />
+            </body>
+            <body name="rot_lower_left" pos="-0.31 -0.98 0.22" quat="0.894427 0 0.447214 0">
+                <geom size="0.3 0.02 0.02" type="box" rgba="0.9 0.9 0.9 1" />
+            </body>
+            <body name="rot_upper_right" pos="-0.31 0.98 1.04" quat="0.447214 0 0.894427 0">
+                <geom size="0.3 0.02 0.02" type="box" rgba="0.9 0.9 0.9 1" />
+            </body>
+            <body name="rot_upper_left" pos="-0.31 -0.98 1.04" quat="0.447214 0 0.894427 0">
+                <geom size="0.3 0.02 0.02" type="box" rgba="0.9 0.9 0.9 1" />
+            </body>
+            <body name="support_body" pos="0 0 -0.4">
+                <geom size="0.49 0.98 0.4" type="box" solref="0.002 1" solimp="0.999 0.999 0.001 0.5 2" rgba="0 0 0 0" />
+            </body>
+        </body>
+        <body name="rnd_0" pos="0.55 9.248471380107387e-22 0.2524116900000001" quat="0.0 1.0 0.0 0.0">
+            <joint name="0:joint" type="free" />
+            <geom quat="0.707107 0 -0.707107 0" type="mesh" rgba="0 1 1 1" mesh="0" />
+        </body>
+        <body name="rnd_1" pos="0.55 -8.992059326652657e-23 0.3524116900000001" quat="0.0 1.0 0.0 0.0">
+            <joint name="1:joint" type="free" />
+            <geom quat="0.707107 0 -0.707107 0" type="mesh" rgba="1 0 1 1" mesh="1_vhacd" />
+        </body>
+        <body name="rnd_2" pos="0.55 1.6957099611231432e-23 0.45241169000000014" quat="0.0 1.0 0.0 0.0">
+            <joint name="2:joint" type="free" />
+            <geom quat="0.991445 -0.130526 0 0" type="mesh" rgba="1 1 0 1" mesh="2" />
+        </body>
+        <body name="rnd_3" pos="0.55 3.6951386874836536e-29 0.55241169" quat="0.0 1.0 0.0 0.0">
+            <joint name="3:joint" type="free" />
+            <geom quat="0.707107 0 0.707107 0" type="mesh" rgba="0 0 1 1" mesh="3" />
+        </body>
+        <body name="rnd_4" pos="0.5419970239408458 -0.0005924567413988903 0.6834762815436303" quat="-0.03385895893584912 0.9993675363308441 0.0028585625024605678 0.010484600527404886">
+            <joint name="4:joint" type="free" />
+            <geom quat="0.707107 0 0.707107 0" type="mesh" rgba="0 1 0 1" mesh="4" />
+        </body>
+        <body name="rnd_5" pos="0.55 0.0 0.4" quat="0.0 1.0 0.0 0.0">
+            <joint name="5:joint" type="free" />
+            <geom quat="0.707107 0 0.707107 0" type="mesh" rgba="0 0 1 1" mesh="5" />
+        </body>
+        <body name="rnd_6" pos="0.7209519518317404 0.03137493704552241 0.7817370597279449" quat="-0.00900941332682441 0.7839956985324263 0.19437908803806625 0.5894797242379496">
+            <joint name="6:joint" type="free" />
+            <geom type="mesh" rgba="1 1 1 1" mesh="6" />
+        </body>
+        <body name="rnd_7" pos="0.55 0 0.8" quat="0 1 0 0">
+            <joint name="7:joint" type="free" />
+            <geom quat="0.5 0.5 -0.5 -0.5" type="mesh" rgba="0 1 1 1" mesh="7" />
+        </body>
+        <body name="panda_link0" pos="0 0 0">
+            <geom name="panda_link0:geom1" type="mesh" contype="0" conaffinity="0" group="1" rgba="1 1 1 1" mesh="link0v" />
+            <geom name="panda_link0:geom2" type="mesh" rgba="1 1 1 1" mesh="link0v" />
+            <body name="panda_link1" pos="0 0 0.333">
+                <joint name="panda_joint1" pos="0 0 0" axis="0 0 1" limited="true" range="-2.9671 2.9671" />
+                <geom name="panda_joint1:geom1" type="mesh" contype="0" conaffinity="0" group="1" rgba="1 1 1 1" mesh="link1v" />
+                <geom name="panda_joint1:geom2" type="mesh" rgba="1 1 1 1" mesh="link1v" />
+                <body name="panda_link2" pos="0 0 0" quat="0.707107 -0.707107 0 0">
+                    <joint name="panda_joint2" pos="0 0 0" axis="0 0 1" limited="true" range="-1.8326 1.8326" />
+                    <geom name="panda_joint2:geom1" type="mesh" contype="0" conaffinity="0" group="1" rgba="1 1 1 1" mesh="link2v" />
+                    <geom name="panda_joint2:geom2" type="mesh" rgba="1 1 1 1" mesh="link2v" />
+                    <body name="panda_link3" pos="0 -0.316 0" quat="0.707107 0.707107 0 0">
+                        <joint name="panda_joint3" pos="0 0 0" axis="0 0 1" limited="true" range="-2.9671 2.9671" />
+                        <geom name="panda_joint3:geom1" type="mesh" contype="0" conaffinity="0" group="1" rgba="1 1 1 1" mesh="link3v" />
+                        <geom name="panda_joint3:geom2" type="mesh" rgba="1 1 1 1" mesh="link3v" />
+                        <body name="panda_link4" pos="0.0825 0 0" quat="0.707107 0.707107 0 0">
+                            <joint name="panda_joint4" pos="0 0 0" axis="0 0 1" limited="true" range="-3.1416 0.0873" />
+                            <geom name="panda_link4:geom1" type="mesh" contype="0" conaffinity="0" group="1" rgba="1 1 1 1" mesh="link4v" />
+                            <geom name="panda_link4:geom2" type="mesh" rgba="1 1 1 1" mesh="link4v" />
+                            <body name="panda_link5" pos="-0.0825 0.384 0" quat="0.707107 -0.707107 0 0">
+                                <joint name="panda_joint5" pos="0 0 0" axis="0 0 1" limited="true" range="-2.9671 2.9671" />
+                                <geom name="panda_link5:geom1" type="mesh" contype="0" conaffinity="0" group="1" rgba="1 1 1 1" mesh="link5v" />
+                                <geom name="panda_link5:geom2" type="mesh" rgba="1 1 1 1" mesh="link5v" />
+                                <body name="panda_link6" pos="0 0 0" quat="0.707107 0.707107 0 0">
+                                    <joint name="panda_joint6" pos="0 0 0" axis="0 0 1" limited="true" range="-0.0873 3.8223" />
+                                    <geom name="panda_link6:geom1" type="mesh" contype="0" conaffinity="0" group="1" rgba="1 1 1 1" mesh="link6v" />
+                                    <geom name="panda_link6:geom2" type="mesh" rgba="1 1 1 1" mesh="link6v" />
+                                    <body name="panda_link7" pos="0.088 0 0" quat="0.707107 0.707107 0 0">
+                                        <joint name="panda_joint7" pos="0 0 0" axis="0 0 1" limited="true" range="-2.9671 2.9671" />
+                                        <geom name="panda_link7:geom1" type="mesh" contype="0" conaffinity="0" group="1" rgba="1 1 1 1" mesh="link7v" />
+                                        <geom name="panda_link7:geom2" type="mesh" solimp="1.998 1.999 0 0.5 2" rgba="1 1 1 1" mesh="link7v" />
+                                        <body name="panda_link8" pos="0 0 0.107">
+                                            <body name="panda_hand" pos="0 0 0" quat="0.92388 0 0 -0.382683">
+                                                <geom name="panda_hand:geom1" type="mesh" contype="0" conaffinity="0" group="1" mesh="handv" />
+                                                <geom name="panda_hand:geom2" type="mesh" solimp="1.998 1.999 0 0.5 2" mesh="handv" />
+                                                <camera name="rgbd" pos="0.1 0 0" quat="0.000796327 0 1 0" ipd="0" fovy="60" />
+                                                <body name="tcp" pos="0 0 0.105">
+                                                    <site name="tcp" pos="0 0 0" size="0.001" rgba="0 0.5 0.5 1" />
+                                                </body>
+                                                <body name="panda_leftfinger" childclass="panda:gripper" pos="0 0 0.0584">
+                                                    <joint name="panda_finger_joint1" pos="0 0 0" axis="0 1 0" />
+                                                    <geom name="panda_leftfinger:geom1" type="mesh" contype="0" conaffinity="0" group="1" mesh="fingerv" />
+                                                    <geom name="panda_leftfinger:geom2" type="mesh" mesh="fingerv" />
+                                                    <site name="panda_leftfinger:site" pos="0 0.012 0.045" size="0.012 0.015 0.012" type="box" rgba="0 0 1 0" />
+                                                    <body name="finger_joint1_tip" pos="0 0.0085 0.056">
+                                                        <geom name="finger1_tip_collision" size="0.008 0.004 0.008" pos="0 -0.005 -0.012" quat="0 0 0 1" friction="2 0.05 0.0001" solref="0.01 0.5" rgba="1 0 0 1" />
+                                                    </body>
+                                                </body>
+                                                <body name="panda_rightfinger" childclass="panda:gripper" pos="0 0 0.0584">
+                                                    <joint name="panda_finger_joint2" pos="0 0 0" axis="0 -1 0" />
+                                                    <geom name="panda_rightfinger:geom1" quat="0 0 0 1" type="mesh" contype="0" conaffinity="0" group="1" mesh="fingerv" />
+                                                    <geom name="panda_rightfinger:geom2" quat="0 0 0 1" type="mesh" mesh="fingerv" />
+                                                    <site name="panda_rightfinger:site" pos="0 -0.012 0.045" size="0.012 0.015 0.012" type="box" rgba="0 0 1 0" />
+                                                    <body name="finger_joint2_tip" pos="0 -0.0085 0.056">
+                                                        <geom name="finger2_tip_collision" size="0.008 0.004 0.008" pos="0 0.005 -0.012" quat="0 0 0 1" friction="2 0.05 0.0001" solref="0.01 0.5" rgba="1 0 0 1" />
+                                                    </body>
+                                                </body>
+                                            </body>
+                                        </body>
+                                    </body>
+                                </body>
+                            </body>
+                        </body>
+                    </body>
+                </body>
+            </body>
+        </body>
+    </worldbody>
+    <contact>
+        <exclude body1="panda_link0" body2="panda_link1" />
+        <exclude body1="panda_link1" body2="panda_link2" />
+        <exclude body1="panda_link2" body2="panda_link3" />
+        <exclude body1="panda_link3" body2="panda_link4" />
+        <exclude body1="panda_link4" body2="panda_link5" />
+        <exclude body1="panda_link5" body2="panda_link6" />
+        <exclude body1="panda_link6" body2="panda_link7" />
+        <exclude body1="panda_link7" body2="panda_link8" />
+        <exclude body1="panda_link8" body2="panda_hand" />
+    </contact>
+    <actuator>
+        <general name="panda_joint1_act" joint="panda_joint1" forcelimited="true" forcerange="-87 87" />
+        <general name="panda_joint2_act" joint="panda_joint2" forcelimited="true" forcerange="-87 87" />
+        <general name="panda_joint3_act" joint="panda_joint3" forcelimited="true" forcerange="-87 87" />
+        <general name="panda_joint4_act" joint="panda_joint4" forcelimited="true" forcerange="-87 87" />
+        <general name="panda_joint5_act" joint="panda_joint5" forcelimited="true" forcerange="-12 12" />
+        <general name="panda_joint6_act" joint="panda_joint6" forcelimited="true" forcerange="-12 12" />
+        <general name="panda_joint7_act" joint="panda_joint7" forcelimited="true" forcerange="-12 12" />
+        <general name="panda_finger_joint1_act" joint="panda_finger_joint1" forcelimited="true" forcerange="-70 70" />
+        <general name="panda_finger_joint2_act" joint="panda_finger_joint2" forcelimited="true" forcerange="-70 70" />
+    </actuator>
+    <sensor>
+        <touch site="panda_leftfinger:site" name="touchsensor:left" />
+        <touch site="panda_rightfinger:site" name="touchsensor:right" />
+    </sensor>
+    <keyframe>
+        <key time="0.09900000000000007" qpos="0.55 9.409609589869209e-22 0.25144050000000007 0.0 1.0 0.0 0.0 0.55 -9.191012030494117e-23 0.3514405000000001 0.0 1.0 0.0 0.0 0.55 1.7303162868603502e-23 0.45144050000000013 0.0 1.0 0.0 0.0 0.55 3.770549681105769e-29 0.5514405 0.0 1.0 0.0 0.0 0.541871711081102 -0.0006218646941181052 0.6834516696686632 -0.033801149886781144 0.9993717877190351 0.00283762514333032 0.010269374914625694 0.8254083268750818 -0.038653268818439605 0.8651171372810571 -0.07494972927537095 0.5375276055350701 0.7861707198286639 0.2956048217694753 0.7232383068180748 0.031800862019639956 0.7811567214424271 -0.007156787902333294 0.7807642694712881 0.19548035156096688 0.593416690073247 0.7962317129132418 0.034546570036432474 0.8011322616283875 0.49323715028614096 0.8525423645940617 0.062154029828180905 -0.16132422857739181 0.0022071167687260085 0.16946966507088346 -0.004926154488229059 -0.8714873491358957 -0.0033669816857209035 1.1832707609201183 0.781955475280816 0.026570170482550875 0.02692340469001511" qvel="-6.179434281209392e-19 1.611382097618208e-20 -0.9711899999999991 -2.1978922724697037e-17 -1.900273360992117e-19 5.600613107325592e-19 1.2148766778625245e-24 -1.989527038414601e-21 -0.9711899999999991 1.099144357642832e-17 -2.6102271192415954e-24 2.998565884005156e-19 1.7303206116358657e-22 3.460632573720696e-22 -0.9711899999999988 2.946418533203757e-23 5.4956275390876795e-18 8.106762937253363e-21 8.598281617938632e-23 7.541099362211547e-28 -0.9711899999999991 1.0991207942606007e-17 -5.495605883843506e-18 2.039322427349664e-20 -0.1253128597437678 -0.029407952719214907 -0.024611874967057145 -0.11504143796737677 -0.4291807997896388 0.05523496099904536 3.0243201645403963 -0.42203969265822755 0.221723659864961 -90.11645049169536 -77.65741812513436 23.433411358002484 2.2863549863343877 0.42592497411754604 -0.5803382855178867 -3.0788724848189206 9.242832744713088 -5.2381526544683705 2.9304749761283837 0.5610161266854646 -0.19079151790004528 -5.9920726936297495 -28.57392289423739 -13.010547254823166 0.028901462337292037 -0.06977186164312257 -0.06709182148756215 -0.011318919031899502 -0.03815044699703125 -0.47746174854515455 -0.04336811199546921 0.00608048657891649 -0.002526300495053289" />
+    </keyframe>
+</mujoco>
