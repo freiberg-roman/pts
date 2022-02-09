@@ -3,6 +3,7 @@ Simple setting for performing predefined push actions
 """
 import os
 import xml.etree.ElementTree as Et
+from copy import deepcopy
 from shutil import copyfile
 from xml.etree.ElementTree import Element
 
@@ -26,18 +27,10 @@ from mujoco_py import MjSim
 base_path = "/home/roman/projects/SimulationFramework/models/mujoco/surroundings/"
 
 
-def create_clutter(
-    scene, robot, min, max, total, limits, drop_height, obj_path, iter=0
-):
-    num_obj = np.random.random_integers(min, max)
-
+def create_clutter(scene, robot, objects, limits, drop_height):
     # ### Dropping objets to table ###
 
-    object_order = []
-    objects = np.random.random_integers(0, total - 1, num_obj)
-
-    for idx, obj_id in enumerate(objects):
-        obj_name = "shape_run_%03d_it_%06d" % (iter, idx)
+    for i in len(objects):
 
         drop_x = (limits[0][1] - limits[0][0]) * np.random.random_sample() + limits[0][
             0
@@ -52,20 +45,9 @@ def create_clutter(
             2 * np.pi * np.random.random_sample(),
         ]
 
-        pb_obj = PyBulletObject(
-            urdf_name="%03d" % obj_id,
-            object_name=obj_name,
-            position=obj_pos,
-            orientation=obj_orientation,
-            data_dir=os.path.dirname(os.path.abspath(__file__))
-            + "/../../"
-            + obj_path
-            + "%03d" % obj_id,
-        )
-
-        print("dropping  -->", pb_obj)
-        object_order.append(["%03d.urdf" % idx, obj_pos, obj_orientation])
-        scene.add_object(pb_obj)
+        objects = freeze(scene, objects)  # should be a python context
+        set_pos(objects[i], obj_pos, obj_orientation)
+        scene, robot = unfreeze(scene, robot, objects)
 
         # wait ...
         for _ in range(256):
@@ -74,6 +56,8 @@ def create_clutter(
     # wait a little bit, once all the objects were dropped
     for _ in range(256):
         robot.nextStep()
+
+    return scene, robot
 
 
 def load_obj(order):
