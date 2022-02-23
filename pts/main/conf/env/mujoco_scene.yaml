@@ -1,0 +1,18 @@
+workspace_limit: [[0.3, 0.748], [-0.224, 0.224], [0.02, 0.62]] # workspace limits
+heightmap_resolution: 0.002
+min_number_objects: 2
+max_number_objects: 2
+session_limit: 3
+drop_height: 0.5
+total_number_objects: 8
+
+simulator: "mujoco"
+object_path: resources/obj/mujoco_xml/
+path: db/
+
+data:
+  save_numpy: True # Flag to save depth images and segmentation masks as numpy arrays
+  save_png: True # Flag to save depth images and segmentation masks as png files
+  save_color_img: True # Flag to save RGB images
+  cam_height: 384
+  cam_width: 512
