@@ -9,7 +9,7 @@ from pts.models import MaskRGNetwork
 @hydra.main(config_path="conf", config_name="main")
 def run(cfg: DictConfig):
     if cfg.mode == "gen":
-        generate(cfg.gen)
+        generate(cfg.env)
 
     if cfg.mode == "train_rg":
         rg_net = MaskRGNetwork(cfg.reward_model)

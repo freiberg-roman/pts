@@ -324,6 +324,7 @@ def run():
     # ### Reset scene ###
     scene.reset()
 
+
 def run2():
     scene, robot, freezable = create_scene()
     robot.set_gripper_width = 0.0

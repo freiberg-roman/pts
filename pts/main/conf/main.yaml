@@ -3,7 +3,7 @@ defaults:
   - gen: gen
   - eval_model: push_dqn
   - reward_model: mask_rg
-  - env: pybullet_scene
+  - env: mujoco_scene
 
 root_dir: "./exp"
 mode: "gen"  # others are 'train_rg', 'train_dqn' and 'test',
