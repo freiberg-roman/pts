@@ -6,7 +6,7 @@ defaults:
   - env: pybullet_scene
 
 root_dir: "./exp"
-mode: "train_dqn"  # others are 'train_rg', 'train_dqn' and 'test',
+mode: "gen"  # others are 'train_rg', 'train_dqn' and 'test',
 
 hydra:
   run:

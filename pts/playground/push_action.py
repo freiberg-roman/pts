@@ -11,7 +11,7 @@ import alr_sim.utils.geometric_transformation as gt
 import mujoco_py
 import numpy as np
 import pybullet as p
-from alr_sim.core.Logger import RobotPlotFlags
+from alr_sim.sims.mujoco.FreezableMujocoEnvironment import FreezableMujocoEnvironment
 from alr_sim.sims.mujoco.mj_utils.mujoco_scene_object import MujocoObject
 from alr_sim.sims.mujoco.mj_utils.mujoco_viewer import MujocoViewer
 from alr_sim.sims.mujoco.MujocoCamera import MujocoCamera
@@ -324,6 +324,26 @@ def run():
     # ### Reset scene ###
     scene.reset()
 
+def run2():
+    scene, robot, freezable = create_scene()
+    robot.set_gripper_width = 0.0
+    mj_freezable = FreezableMujocoEnvironment(scene, robot, freezable)
+
+    push_at(mj_freezable.robot, 0.5, 0.0)
+
+    with mj_freezable as f:
+        f.set_obj_pose(freezable[-1], [0.55, 0.0, 0.4], [0.0, 1.0, 0.0, 0.0])
+        box = Box(
+            name="simple_box",
+            init_pos=[0.55, 0.0, 0.3],
+            rgba=[1.0, 1.0, 1.0, 1.0],
+            init_quat=[0.0, 1.0, 0.0, 0.0],
+            size=[0.05, 0.05, 0.05],
+        )
+        f.add_obj_rt(box)
+
+    push_at(mj_freezable.robot, 0.5, 0.0)
+
 
 if __name__ == "__main__":
-    run()
+    run2()
