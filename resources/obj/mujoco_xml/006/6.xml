@@ -5,7 +5,7 @@
         <mesh name="6" file="6.stl" />
     </asset>
     <worldbody>
-        <body name="rnd_6" pos="0.55 0.0 0.8" quat="0.0 1.0 0.0 0.0">
+        <body name="shape_run_002_it_000001" pos="0.523005470372705 0.04591741013858344 0.5" quat="-0.7682494116192924 -0.346337220503076 -0.5383619738700528 0.0031235126949343273">
             <freejoint name="6:joint" />
             <geom type="mesh" rgba="1 1 1 1" mesh="6" density="500" friction="1" />
         </body>

@@ -1,11 +1,11 @@
 <mujoco model="rnd_1">
-    <compiler angle="radian" />
+    <compiler angle="radian" meshdir="."/>
     <size njmax="500" nconmax="100" />
     <asset>
         <mesh name="1_vhacd" file="1_vhacd.stl" />
     </asset>
     <worldbody>
-        <body name="shape_run_002_it_000001" pos="0.7110811138896107 0.1198904263962279 0.5" quat="-0.06775986892807567 -0.4474700256961128 -0.85372676733067 0.25754569111032366">
+        <body name="shape_run_000_it_000002" pos="0.897273081560376 -0.1392806083490565 0.016533514572172604" quat="0.6390307789221074 0.30951831174371547 -0.6336120574779102 0.3072032534074707">
             <freejoint name="1:joint" />
             <geom quat="0.707107 0 -0.707107 0" type="mesh" rgba="1 0 1 1" mesh="1_vhacd" density="500" friction="1" />
         </body>
