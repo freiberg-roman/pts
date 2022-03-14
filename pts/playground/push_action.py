@@ -305,30 +305,84 @@ def push_at(robot, x, y, height=0.5, intermediate_steps=15):
 
 
 def run():
-    # ### Creating scene ###
-    # workspace limits are x: [0.3, 0.9], y: [-0.6, 0.6]
-    scene, robot, freezable = create_scene()
-    robot.set_gripper_width = 0.0
+    mj_factory = MujocoFactory()
+    scene = mj_factory.create_scene()
+    robot = mj_factory.create_robot(scene)
+    obj_list = [
+        SimRepository.get_factory("mujoco").create_camera(
+            "cage_cam",
+            384,
+            512,
+            [0.0, 0.0, 0.5 + 0.7],  # init pos.
+            gt.euler2quat([-np.pi * 7 / 8, 0, np.pi / 2]),
+        ),
+        Box(
+            name="drop_zone",
+            init_pos=[0.6, 0.0, -0.01],
+            rgba=[1.0, 1.0, 1.0, 1.0],
+            init_quat=[0.0, 1.0, 0.0, 0.0],
+            size=[0.6, 0.6, 0.005],
+            static=True,
+        ),
+        Box(
+            name="wall",
+            init_pos=[1.2, 0.0, 0.35],
+            rgba=[1.0, 1.0, 1.0, 0.1],
+            init_quat=[0.0, 1.0, 0.0, 0.0],
+            size=[0.005, 1.2, 0.4],
+            static=True,
+        ),
+    ]
+    for o in obj_list:
+        scene.add_object(o)
+    scene.start()
 
-    # ### Create clutter ###
+    for i in range(2000):
+        robot.nextStep()
+    import glfw
 
-    # ### Perform push ###
-    push_at(robot, 0.5, 0.0)
+    glfw.destroy_window(scene.viewer.viewer.window)
+    scene.viewer.viewer = None
+    scene.viewer = None
+    scene = mj_factory.create_scene()
+    robot = mj_factory.create_robot(scene)
+    obj_list = [
+        SimRepository.get_factory("mujoco").create_camera(
+            "cage_cam",
+            384,
+            512,
+            [0.0, 0.0, 0.5 + 0.7],  # init pos.
+            gt.euler2quat([-np.pi * 7 / 8, 0, np.pi / 2]),
+        ),
+        Box(
+            name="drop_zone",
+            init_pos=[0.6, 0.0, -0.01],
+            rgba=[1.0, 1.0, 1.0, 1.0],
+            init_quat=[0.0, 1.0, 0.0, 0.0],
+            size=[0.6, 0.6, 0.005],
+            static=True,
+        ),
+        Box(
+            name="wall",
+            init_pos=[1.2, 0.0, 0.35],
+            rgba=[1.0, 1.0, 1.0, 0.1],
+            init_quat=[0.0, 1.0, 0.0, 0.0],
+            size=[0.005, 1.2, 0.4],
+            static=True,
+        ),
+    ]
+    for o in obj_list:
+        scene.add_object(o)
+    scene.start()
 
-    # ### Save positions of objects ###
-    freezable = freeze(scene, freezable)  # should be a python context
-    set_pos(freezable[-1], [0.55, 0.0, 0.4], [0.0, 1.0, 0.0, 0.0])
-    scene, robot = unfreeze(scene, robot, freezable)
-    push_at(robot, 0.5, 0.0)
-
-    # ### Reset scene ###
-    scene.reset()
+    for i in range(2000):
+        robot.nextStep()
 
 
 def run2():
     scene, robot, freezable = create_scene()
     robot.set_gripper_width = 0.0
-    mj_freezable = FreezableMujocoEnvironment(scene, robot, freezable)
+    mj_freezable = FreezableMujocoEnvironment([])
 
     push_at(mj_freezable.robot, 0.5, 0.0)
 
@@ -347,4 +401,4 @@ def run2():
 
 
 if __name__ == "__main__":
-    run2()
+    run()

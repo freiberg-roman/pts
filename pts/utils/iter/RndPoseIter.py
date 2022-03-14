@@ -1,7 +1,7 @@
-import alr_sim.utils.geometric_transformation as gt
 from dataclasses import dataclass
 from typing import List
 
+import alr_sim.utils.geometric_transformation as gt
 import numpy as np
 
 
@@ -27,9 +27,11 @@ class RndPoseIter:
             self.limits[1][1] - self.limits[1][0]
         ) * np.random.random_sample() + self.limits[1][0]
         pos = [drop_x, drop_y, self.drop_height]
-        quat = gt.euler2quat([
-            2 * np.pi * np.random.random_sample(),
-            2 * np.pi * np.random.random_sample(),
-            2 * np.pi * np.random.random_sample(),
-        ])
+        quat = gt.euler2quat(
+            [
+                2 * np.pi * np.random.random_sample(),
+                2 * np.pi * np.random.random_sample(),
+                2 * np.pi * np.random.random_sample(),
+            ]
+        )
         return ObjectPose(pos, quat)

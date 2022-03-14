@@ -27,6 +27,5 @@ class RndMJObjectIter:
             [0.0, 0.0, 0.0],
             [0.0, 1.0, 0.0, 0.0],
             obj_path=self.path
-            + "%03d/%d.xml"
-            % (self.obj_list[self.num], self.obj_list[self.num]),
+            + "%03d/%d.xml" % (self.obj_list[self.num], self.obj_list[self.num]),
         )
