@@ -82,12 +82,17 @@ def generate(cfg_gen: DictConfig):
 
         print("saving images ...")
         rgb, depth = freezable.scene.get_cage_cam().get_image(depth=True)
+        seg_img = freezable.scene.get_cage_cam().get_segmentation(
+            height=1000, width=1000, depth=False
+        )
+        plt.imshow(seg_img), plt.show()
         plt.imshow(rgb), plt.show()
         cv.imwrite(
-            cfg_gen.path + "%d.png" % i,
+            "%d.png" % i,
             cv.cvtColor(rgb, cv.COLOR_RGB2BGR),
         )
         np.save("%d_depth.npy" % i, depth)
+        np.save("%d_seg.npy" % i, seg_img)
         print(
             "Iteration: "
             + str(i + 1)

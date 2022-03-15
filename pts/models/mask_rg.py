@@ -80,25 +80,10 @@ class MaskRGNetwork(nn.Module):
     def train_model(self):
 
         for epoch in range(self.num_epochs):
-
-            # ### Use adaptive lr for first epoch ###
-            def scheduler(warm_iters, warm_factor):
-                def f(x):
-                    if x >= warm_iters:
-                        return 1
-                    alpha = float(x) / warm_iters
-                    return warm_factor * (1 - alpha) + alpha
-
-                return torch.optim.lr_scheduler.LambdaLR(self.optimizer, f)
-
-            warm_scheduler = scheduler(min(1000, len(self.data_loader), 1.0 / 1000))
-
-            # ### Train for one epoch ###
-
             self.mask_r_cnn.train()
 
             for imgs, targets in self.data_loader:
-                imgs = list(imgs.to(self.device) for img in imgs)
+                imgs = list(img.to(self.device) for img in imgs)
                 targets = [
                     {k: v.to(self.device) for k, v in t.items()} for t in targets
                 ]
@@ -121,9 +106,6 @@ class MaskRGNetwork(nn.Module):
                 self.optimizer.zero_grad()
                 losses.backwards()
                 self.optimizer.step()
-
-                if epoch == 0:
-                    warm_scheduler.step()
 
     def evaluate_model(self):
         # evaluate on the test dataset
@@ -162,7 +144,7 @@ class MaskRGNetwork(nn.Module):
             collate_fn=lambda x: tuple(zip(*x)),
         )
 
-    def _save_model(self, string=None):
+    def save_model(self, string=None):
         t = time.time()
         timestamp = datetime.datetime.fromtimestamp(t)
         file_name = (
@@ -231,8 +213,8 @@ class RewardGenerator(object):
 
         self.obj_ids = None
         self.num_objs = None
-        self.height = 1024
-        self.width = 1024
+        self.height = 1000
+        self.width = 1000
         self.gts = None
         self.scores = None
         self.masks = None

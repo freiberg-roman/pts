@@ -14,6 +14,7 @@ def run(cfg: DictConfig):
     if cfg.mode == "train_rg":
         rg_net = MaskRGNetwork(cfg.reward_model)
         rg_net.train_model()
+        rg_net
 
     if cfg.mode == "train_dqn":
         train_dqn(cfg.eval_model, cfg.reward_model, cfg.env)
