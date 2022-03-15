@@ -73,9 +73,11 @@ def generate(cfg_gen: DictConfig):
                 f.set_obj_pose(new_obj, pose.pos, pose.orientation)
 
             # wait a bit
-            for _ in range(2000):
+            for _ in range(200):
                 freezable.robot.nextStep()
 
+        for _ in range(2000):
+            freezable.robot.nextStep()
         # ### Saving image ###
 
         print("saving images ...")
@@ -85,6 +87,7 @@ def generate(cfg_gen: DictConfig):
             cfg_gen.path + "%d.png" % i,
             cv.cvtColor(rgb, cv.COLOR_RGB2BGR),
         )
+        np.save("%d_depth.npy" % i, depth)
         print(
             "Iteration: "
             + str(i + 1)
