@@ -1,10 +1,14 @@
-import cv2 as cv
 import hydra
+import torch
 from omegaconf import DictConfig
+from torchvision.io import read_image
+from torchvision.transforms.functional import convert_image_dtype
+from torchvision.utils import draw_bounding_boxes
 
 from pts.gen import generate
 from pts.main import train_dqn
 from pts.models import MaskRGNetwork
+from pts.utils.image_helper import show
 
 
 @hydra.main(config_path="conf", config_name="main")
@@ -14,13 +18,25 @@ def run(cfg: DictConfig):
 
     if cfg.mode == "train_rg":
         rg_net = MaskRGNetwork(cfg.reward_model)
-        rg_net.train_model()
-        rg_net.save_model(cfg.reward_model.path_store_weights)
+        # rg_net.train_model()
+        rg_net.save_model()
 
     if cfg.mode == "test_rg":
         rg_net = MaskRGNetwork(cfg.reward_model)
-        img = cv.imread(cfg.test.path_test_image)
-        rg_net.eval_single_img(img)
+        rg_net.load_weights()
+
+        img = read_image(cfg.reward_model.test.path_test_image)
+        batch_int = torch.stack([img])
+        batch = convert_image_dtype(batch_int, dtype=torch.float)
+
+        out = rg_net.eval_single_img(batch)
+        img_with_boxes = [
+            draw_bounding_boxes(
+                img, boxes=output["boxes"][output["scores"] > 0.1], width=4
+            )
+            for img, output in zip(batch_int, out)
+        ]
+        show(img_with_boxes)
 
     if cfg.mode == "train_dqn":
         train_dqn(cfg.eval_model, cfg.reward_model, cfg.env)

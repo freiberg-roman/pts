@@ -23,7 +23,7 @@ WIDTH = 1024
 
 
 class MaskRGNetwork(nn.Module):
-    def __init__(self, cfg_rg, train=True):
+    def __init__(self, cfg_rg):
         super(MaskRGNetwork, self).__init__()
 
         self.num_epochs = cfg_rg.train.epochs
@@ -31,6 +31,8 @@ class MaskRGNetwork(nn.Module):
         self.batch_size = cfg_rg.train.batch_size
         self.backbone = cfg_rg.train.backbone
         self.bb_pretrained = cfg_rg.train.backbone_pretrained
+        self.saving_path = cfg_rg.path_store_weights
+        self.weights_path = cfg_rg.path_load_weights
         is_cuda = cfg_rg.train.cuda_available
 
         if is_cuda:
@@ -115,8 +117,6 @@ class MaskRGNetwork(nn.Module):
         return res
 
     def eval_single_img(self, img):
-        # self.device = torch.device("cpu")
-
         self.mask_r_cnn.eval()
         with torch.no_grad():
             preds = self.mask_r_cnn(img)
@@ -124,8 +124,7 @@ class MaskRGNetwork(nn.Module):
         return preds
 
     def load_weights(self):
-        # this should be called after the initialisation of the model
-        self.mask_r_cnn.load_state_dict(torch.load(self.weigths_path))
+        self.mask_r_cnn.load_state_dict(torch.load(self.weights_path))
 
     def set_data(self, data, is_test=False):
 
@@ -144,15 +143,10 @@ class MaskRGNetwork(nn.Module):
             collate_fn=lambda x: tuple(zip(*x)),
         )
 
-    def save_model(self, string=None):
+    def save_model(self):
         t = time.time()
         timestamp = datetime.datetime.fromtimestamp(t)
-        file_name = (
-            self.saving_prefix
-            + string
-            + timestamp.strftime("%Y-%m-%d.%H:%M:%S")
-            + ".pth"
-        )
+        file_name = timestamp.strftime("%Y-%m-%d.%H:%M:%S") + ".pth"
         torch.save(
             self.mask_r_cnn.state_dict(), os.path.join(self.saving_path, file_name)
         )
