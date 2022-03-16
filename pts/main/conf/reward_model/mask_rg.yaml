@@ -15,3 +15,6 @@ train:
   backbone: resnet50
   backbone_pretrained: True
   cuda_available: False
+
+test:
+  path_test_image: "./test.png"

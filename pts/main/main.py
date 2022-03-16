@@ -1,3 +1,4 @@
+import cv2 as cv
 import hydra
 from omegaconf import DictConfig
 
@@ -14,7 +15,12 @@ def run(cfg: DictConfig):
     if cfg.mode == "train_rg":
         rg_net = MaskRGNetwork(cfg.reward_model)
         rg_net.train_model()
-        rg_net
+        rg_net.save_model(cfg.reward_model.path_store_weights)
+
+    if cfg.mode == "test_rg":
+        rg_net = MaskRGNetwork(cfg.reward_model)
+        img = cv.imread(cfg.test.path_test_image)
+        rg_net.eval_single_img(img)
 
     if cfg.mode == "train_dqn":
         train_dqn(cfg.eval_model, cfg.reward_model, cfg.env)
