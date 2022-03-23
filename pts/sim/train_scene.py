@@ -1,133 +1,107 @@
+import os.path
+
 import alr_sim.utils.geometric_transformation as gt
 import numpy as np
 import pybullet as p
+from alr_sim.sims.mujoco.FreezableMujocoEnvironment import FreezableMujocoEnvironment
 from alr_sim.sims.SimFactory import SimRepository
 from alr_sim.sims.universal_sim.PrimitiveObjects import Box
 from alr_sim.utils.geometric_transformation import quat2mat
 from alr_sim.utils.unique_dict import UniqueDict
 
+from pts.utils.iter.RndObjectIter import RndMJObjectIter
+from pts.utils.iter.RndPoseIter import RndPoseIter
 from pts.utils.sim_helper import create_clutter
 
 
 class TrainScene:
-    def __init__(self, settings):
-        self.min_obj = settings.min_number_objects
-        self.max_obj = settings.max_number_objects
-        self.total_num = settings.total_number_objects
-        self.ws_limits = settings.workspace_limit
-        self.drop_height = settings.drop_height
-        self.path = settings.object_path
+    def __init__(self, cfg):
+        self.min_obj = cfg.min_number_objects
+        self.max_obj = cfg.max_number_objects
+        self.total_num = cfg.total_number_objects
+        self.ws_limits = cfg.workspace_limit
+        self.drop_height = cfg.drop_height
+        self.path = cfg.object_path
+        self.cam_width = cfg.data.cam_width
+        self.cam_height = cfg.data.cam_height
 
-        # ### Scene creating ###
-
-        sim_factory = SimRepository.get_factory(settings.simulator)
-        self.robot = sim_factory.create_robot()
-        self.scene = sim_factory.create_scene(self.robot, object_list=[])
-        self.cam = sim_factory.create_camera(
-            "cage_cam",
-            settings.data.cam_width,
-            settings.data.cam_height,
-            [0.7, 0.0, self.drop_height + 0.7],  # init pos.
-            gt.euler2quat([-np.pi * 7 / 8, 0, np.pi / 2]),
-        )
-        self.scene.object_list = []
-        self.scene.name2id_map = {}  # dict mapping names to obj_ids
-        self.scene._objects = UniqueDict(
-            err_msg="Duplicate object name:"
-        )  # dict mapping names to object instances
-        self.scene.add_object(self.cam)
-
-        pos, rot_quat = self.cam.get_cart_pos_quat()
-        self.cam_rot_mat = quat2mat(rot_quat)
-
-        cam_trans = np.eye(4, 4)
-        cam_trans[0:3, 3] = np.asarray(pos)
-        rotation = np.eye(4, 4)
-        rotation[0:3, 0:3] = self.cam_rot_mat
-
-        self.cam_pose = np.dot(cam_trans, rotation)
-        self.cam_intrinsics = ((self.cam.fx, self.cam.cx), (self.cam.fy, self.cam.cy))
-
-        # ### Adding wall and platform ###
-        self.scene.add_object(
-            Box(
-                name="drop_zone",
-                init_pos=[0.6, 0.0, -0.01],
-                rgba=[1.0, 1.0, 1.0, 1.0],
-                init_quat=[0.0, 1.0, 0.0, 0.0],
-                size=[0.6, 0.6, 0.005],
-                static=True,
-            )
-        )
-        self.scene.add_object(
-            Box(
-                name="wall",
-                init_pos=[1.2, 0.0, 0.35],
-                rgba=[1.0, 1.0, 1.0, 0.1],
-                init_quat=[0.0, 1.0, 0.0, 0.0],
-                size=[0.005, 1.2, 0.4],
-                static=True,
-            )
-        )
+        self.freezable = None
+        self.cam_intrinsics = None
+        self.glob_path = os.path.dirname(os.path.abspath(__file__))
+        self.obj_path = cfg.object_path
         self._duration = 2
 
     def create_testing_scenario(self, it=0):
-        # note: For real application this needs to be reimplemented
-
-        # ### Restoring state ###
-        p.resetSimulation(self.scene.physics_client_id)  # hack version
-
-        self.scene.object_list = []
-        self.scene.name2id_map = {}  # dict mapping names to obj_ids
-        self.scene._objects = {}
-        self.scene.add_object(self.cam)
-
-        # ### Adding wall and platform ###
-        self.scene.add_object(
-            Box(
-                name="drop_zone",
-                init_pos=[0.6, 0.0, -0.01],
-                rgba=[1.0, 1.0, 1.0, 1.0],
-                init_quat=[0.0, 1.0, 0.0, 0.0],
-                size=[0.6, 0.6, 0.005],
-                static=True,
-            )
+        self.freezable = FreezableMujocoEnvironment(
+            [
+                SimRepository.get_factory("mujoco").create_camera(
+                    "cage_cam",
+                    self.cam_width,
+                    self.cam_height,
+                    [0.0, 0.0, self.drop_height + 0.7],  # init pos.
+                    gt.euler2quat([-np.pi * 7 / 8, 0, np.pi / 2]),
+                ),
+                Box(
+                    name="drop_zone",
+                    init_pos=[0.6, 0.0, -0.01],
+                    rgba=[1.0, 1.0, 1.0, 1.0],
+                    init_quat=[0.0, 1.0, 0.0, 0.0],
+                    size=[0.6, 0.6, 0.005],
+                    static=True,
+                ),
+                Box(
+                    name="wall",
+                    init_pos=[1.2, 0.0, 0.35],
+                    rgba=[1.0, 1.0, 1.0, 0.1],
+                    init_quat=[0.0, 1.0, 0.0, 0.0],
+                    size=[0.005, 1.2, 0.4],
+                    static=True,
+                ),
+            ]
         )
-        self.scene.add_object(
-            Box(
-                name="wall",
-                init_pos=[1.2, 0.0, 0.35],
-                rgba=[1.0, 1.0, 1.0, 0.1],
-                init_quat=[0.0, 1.0, 0.0, 0.0],
-                size=[0.005, 1.2, 0.4],
-                static=True,
-            )
-        )
+        self.freezable.start()
 
-        self.scene.start()
-        self._origin_pos = self.robot.current_j_pos
-
-        # ### Generation ###
-
-        create_clutter(
-            self.scene,
-            self.robot,
+        # create object generator
+        gen_obj_iter = RndMJObjectIter(
             self.min_obj,
             self.max_obj,
             self.total_num,
-            self.ws_limits,
-            self.drop_height,
-            self.path,
-            it,
+            self.glob_path + "/../../" + self.obj_path,
+            idx=it,
+        )
+        gen_obj_pose = RndPoseIter(self.ws_limits, self.drop_height)
+        for new_obj, pose in zip(gen_obj_iter, gen_obj_pose):
+            with self.freezable as f:
+                f.add_obj_rt(new_obj)
+                f.set_obj_pose(new_obj, pose.pos, pose.orientation)
+
+            # wait a bit
+            for _ in range(200):
+                self.freezable.robot.nextStep()
+
+        for _ in range(2000):
+            self.freezable.robot.nextStep()
+
+        self.cam_intrinsics = (
+            (
+                self.freezable.scene.get_cage_cam().fx,
+                self.freezable.scene.get_cage_cam().cx,
+            ),
+            (
+                self.freezable.scene.get_cage_cam().fy,
+                self.freezable.scene.get_cage_cam().cy,
+            ),
         )
 
     def get_camera_data(self):
-        color, depth = self.scene.get_cage_cam().get_image(depth=True)
-        return color, depth
+        rgb, depth = self.freezable.scene.get_cage_cam().get_image(depth=True)
+        return rgb, depth
 
     def get_data_mask_rg(self):
-        gt = self.scene.get_cage_cam().get_segmentation()[0]
-        return gt, -1
+        gt = self.freezable.scene.get_cage_cam().get_segmentation(
+            height=1000, width=1000, depth=False
+        )
+        return gt
 
     def move_to(
         self, tool_position, tool_orientation, beam=False, duration=None, nsteps=1
@@ -159,48 +133,41 @@ class TrainScene:
             duration=duration / 2,
         )
 
-    def push(self, pos, heightmap_rotation_angle):
-        return
-        tool_rotation_angle = (heightmap_rotation_angle % np.pi) - np.pi / 2
-        pos[2] += 0.1
-
-        push_orientation = [1.0, 0.0]
-        push_direction = np.asarray(
-            [
-                push_orientation[0] * np.cos(heightmap_rotation_angle)
-                - push_orientation[1] * np.sin(heightmap_rotation_angle),
-                push_orientation[0] * np.sin(heightmap_rotation_angle)
-                + push_orientation[1] * np.cos(heightmap_rotation_angle),
-            ]
+    def push_at(self, x, y, height=0.5, intermediate_steps=15):
+        # goto position above
+        self.freezable.robot.gotoCartPositionAndQuat(
+            desiredPos=[x, y, height], desiredQuat=[0, 1, 0, 0], duration=4.0
         )
 
-        pushing_point_margin = 0.15
-        location_above_pushing_point = (pos[0], pos[1], pos[2] + pushing_point_margin)
-
-        # goto position before pushing
-        self.move_to(location_above_pushing_point, tool_rotation_angle, beam=True)
-
-        # close gripper
-        self.robot.set_gripper_width = 0.0
-
-        # prepare for push
-        self.move_to(pos, tool_rotation_angle, duration=self._duration)
-        push_length = 0.1
-        target_x = min(
-            max(pos[0] + push_direction[0] * push_length, self.ws_limits[0][0]),
-            self.ws_limits[0][1],
+        # straight push down
+        interp = np.linspace(
+            self.freezable.robot.current_c_pos, [x, y, 0.0], intermediate_steps
         )
-        target_y = min(
-            max(pos[1] + push_direction[1] * push_length, self.ws_limits[1][0]),
-            self.ws_limits[1][1],
+        for i in range(interp.shape[0]):
+            self.freezable.robot.gotoCartPositionAndQuat(
+                desiredPos=interp[i, :],
+                desiredQuat=[0, 1, 0, 0],
+                duration=4.0 / intermediate_steps,
+            )
+        self.freezable.robot.gotoCartPositionAndQuat(
+            desiredPos=[x, y, 0.0],
+            desiredQuat=[0, 1, 0, 0],
+            duration=2.0,
         )
 
-        # perform push
-        self.move_to(
-            [target_x, target_y, pos[2]],
-            tool_rotation_angle,
-            duration=self._duration,
+        # go back to position above
+        self.freezable.robot.gotoCartPositionAndQuat(
+            desiredPos=[x, y, height], desiredQuat=[0, 1, 0, 0], duration=4.0
         )
 
-        # Done --> go back to staring position
-        self.robot.beam_to_joint_pos(self._origin_pos)
+    def get_cam_pose(self):
+        pos, rot_quat = self.freezable.scene.get_cage_cam().get_cart_pos_quat()
+        self.cam_rot_mat = quat2mat(rot_quat)
+
+        cam_trans = np.eye(4, 4)
+        cam_trans[0:3, 3] = np.asarray(pos)
+        rotation = np.eye(4, 4)
+        rotation[0:3, 0:3] = self.cam_rot_mat
+
+        self.cam_pose = np.dot(cam_trans, rotation)
+        return self.cam_pose

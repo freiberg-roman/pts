@@ -35,129 +35,14 @@ def get_pointcloud(color_img, depth_img, camera_intrinsics):
     rgb_pts_r = color_img[:, :, 0]
     rgb_pts_g = color_img[:, :, 1]
     rgb_pts_b = color_img[:, :, 2]
-    rgb_pts_r.shape = (im_h * im_w, 1)
-    rgb_pts_g.shape = (im_h * im_w, 1)
-    rgb_pts_b.shape = (im_h * im_w, 1)
+    rgb_pts_r = rgb_pts_r.reshape((im_h * im_w, 1))
+    rgb_pts_g = rgb_pts_g.reshape((im_h * im_w, 1))
+    rgb_pts_b = rgb_pts_b.reshape((im_h * im_w, 1))
 
     cam_pts = np.concatenate((cam_pts_x, cam_pts_y, cam_pts_z), axis=1)
     rgb_pts = np.concatenate((rgb_pts_r, rgb_pts_g, rgb_pts_b), axis=1)
 
     return cam_pts, rgb_pts
-
-
-def get_heightmap2(
-    color_img, depth_img, point_cloud, cam_pose, workspace_limits, heightmap_resolution
-):
-    pass
-
-
-def get_heightmap_from_pc(
-    color_img,
-    depth_img,
-    cam_intrinsics,
-    cam_pose,
-    workspace_limits,
-    heightmap_resolution,
-    surface_pts,
-    color_pts,
-):
-    # Compute heightmap size
-    heightmap_size = np.round(
-        (
-            (workspace_limits[1][1] - workspace_limits[1][0]) / heightmap_resolution,
-            (workspace_limits[0][1] - workspace_limits[0][0]) / heightmap_resolution,
-        )
-    ).astype(int)
-
-    # Get 3D point cloud from RGB-D images
-    surface_pts1, color_pts1 = get_pointcloud(color_img, depth_img, cam_intrinsics)
-
-    # Transform 3D point cloud from camera coordinates to robot coordinates
-    surface_pts1 = np.transpose(
-        np.dot(cam_pose[0:3, 0:3], np.transpose(surface_pts1))
-        + np.tile(cam_pose[0:3, 3:], (1, surface_pts1.shape[0]))
-    )
-
-    print("np.min(surface_pts)=", np.min(surface_pts, 0))
-    print("np.min(surface_pts1)=", np.min(surface_pts1, 0))
-    surface_pts1 = (
-        (surface_pts1 - np.mean(surface_pts1, 0))
-        * np.std(surface_pts, 0)
-        / np.std(surface_pts1, 0)
-    ) + np.mean(surface_pts, 0)
-
-    # Rotate points to match pushNgrap heightmap
-    """theta = -np.pi/2
-    rotX = np.array([[1,0,0],[0,np.cos(theta),-np.sin(theta)], [0,np.sin(theta), np.cos(theta)]])
-    rotZ = np.array([[np.cos(theta),-np.sin(theta),0], [np.sin(theta), np.cos(theta),0], [0,0,1]])
-    mu = np.mean(surface_pts1,0)
-    surface_pts2 = np.dot(rotZ,(surface_pts1-mu).T).T+mu
-    mu =  np.mean(surface_pts2,0)
-    surface_pts2[:,0] = -(surface_pts2[:,0] - mu[0]) + mu[0]
-    surface_pts2[:,-1] = surface_pts[:,-1]"""
-
-    # surface_pts[:,0] = -surface_pts1[:,1]
-    # surface_pts[:,1] = -surface_pts1[:,0]
-    # color_pts[:,0] = -color_pts1[:,1]
-    # color_pts[:,1] = -color_pts1[:,0]
-    surface_pts = surface_pts1
-    color_pts = color_pts1
-
-    print("np.min(new_surface_pts)=", np.min(surface_pts, 0))
-    print("np.max(new_surface_pts)=", np.max(surface_pts, 0))
-
-    # Sort surface points by z value
-    sort_z_ind = np.argsort(surface_pts[:, 2])
-    surface_pts = surface_pts[sort_z_ind]
-    color_pts = color_pts[sort_z_ind]
-
-    # Filter out surface points outside heightmap boundaries
-    heightmap_valid_ind = np.logical_and(
-        np.logical_and(
-            np.logical_and(
-                np.logical_and(
-                    surface_pts[:, 0] >= workspace_limits[0][0],
-                    surface_pts[:, 0] < workspace_limits[0][1],
-                ),
-                surface_pts[:, 1] >= workspace_limits[1][0],
-            ),
-            surface_pts[:, 1] < workspace_limits[1][1],
-        ),
-        surface_pts[:, 2] < workspace_limits[2][1],
-    )
-    surface_pts = surface_pts[heightmap_valid_ind]
-    color_pts = color_pts[heightmap_valid_ind]
-
-    # Create orthographic top-down-view RGB-D heightmaps
-    color_heightmap_r = np.zeros(
-        (heightmap_size[0], heightmap_size[1], 1), dtype=np.uint8
-    )
-    color_heightmap_g = np.zeros(
-        (heightmap_size[0], heightmap_size[1], 1), dtype=np.uint8
-    )
-    color_heightmap_b = np.zeros(
-        (heightmap_size[0], heightmap_size[1], 1), dtype=np.uint8
-    )
-    depth_heightmap = np.zeros(heightmap_size)
-    heightmap_pix_x = np.floor(
-        (surface_pts[:, 0] - workspace_limits[0][0]) / heightmap_resolution
-    ).astype(int)
-    heightmap_pix_y = np.floor(
-        (surface_pts[:, 1] - workspace_limits[1][0]) / heightmap_resolution
-    ).astype(int)
-    color_heightmap_r[heightmap_pix_y, heightmap_pix_x] = color_pts[:, [0]]
-    color_heightmap_g[heightmap_pix_y, heightmap_pix_x] = color_pts[:, [1]]
-    color_heightmap_b[heightmap_pix_y, heightmap_pix_x] = color_pts[:, [2]]
-    color_heightmap = np.concatenate(
-        (color_heightmap_r, color_heightmap_g, color_heightmap_b), axis=2
-    )
-    depth_heightmap[heightmap_pix_y, heightmap_pix_x] = surface_pts[:, 2]
-    z_bottom = workspace_limits[2][0]
-    depth_heightmap = depth_heightmap - z_bottom
-    depth_heightmap[depth_heightmap < 0] = 0
-    depth_heightmap[depth_heightmap == -z_bottom] = np.nan
-
-    return color_heightmap, depth_heightmap, surface_pts, color_pts
 
 
 def get_heightmap(
@@ -249,91 +134,6 @@ def get_heightmap(
     return color_heightmap, depth_heightmap
 
 
-# Save a 3D point cloud to a binary .ply file
-def pcwrite(xyz_pts, filename, rgb_pts=None):
-    assert xyz_pts.shape[1] == 3, "input XYZ points should be an Nx3 matrix"
-    if rgb_pts is None:
-        rgb_pts = np.ones(xyz_pts.shape).astype(np.uint8) * 255
-    assert (
-        xyz_pts.shape == rgb_pts.shape
-    ), "input RGB colors should be Nx3 matrix and same size as input XYZ points"
-
-    # Write header for .ply file
-    pc_file = open(filename, "wb")
-    pc_file.write(bytearray("ply\n", "utf8"))
-    pc_file.write(bytearray("format binary_little_endian 1.0\n", "utf8"))
-    pc_file.write(bytearray(("element vertex %d\n" % xyz_pts.shape[0]), "utf8"))
-    pc_file.write(bytearray("property float x\n", "utf8"))
-    pc_file.write(bytearray("property float y\n", "utf8"))
-    pc_file.write(bytearray("property float z\n", "utf8"))
-    pc_file.write(bytearray("property uchar red\n", "utf8"))
-    pc_file.write(bytearray("property uchar green\n", "utf8"))
-    pc_file.write(bytearray("property uchar blue\n", "utf8"))
-    pc_file.write(bytearray("end_header\n", "utf8"))
-
-    # Write 3D points to .ply file
-    for i in range(xyz_pts.shape[0]):
-        pc_file.write(
-            bytearray(
-                struct.pack(
-                    "fffccc",
-                    xyz_pts[i][0],
-                    xyz_pts[i][1],
-                    xyz_pts[i][2],
-                    rgb_pts[i][0].tostring(),
-                    rgb_pts[i][1].tostring(),
-                    rgb_pts[i][2].tostring(),
-                )
-            )
-        )
-    pc_file.close()
-
-
-def get_affordance_vis(grasp_affordances, input_images, num_rotations, best_pix_ind):
-    vis = None
-    for vis_row in range(num_rotations / 4):
-        tmp_row_vis = None
-        for vis_col in range(4):
-            rotate_idx = vis_row * 4 + vis_col
-            affordance_vis = grasp_affordances[rotate_idx, :, :]
-            affordance_vis[affordance_vis < 0] = 0  # assume probability
-            # affordance_vis = np.divide(affordance_vis, np.max(affordance_vis))
-            affordance_vis[affordance_vis > 1] = 1  # assume probability
-            affordance_vis.shape = (
-                grasp_affordances.shape[1],
-                grasp_affordances.shape[2],
-            )
-            affordance_vis = cv2.applyColorMap(
-                (affordance_vis * 255).astype(np.uint8), cv2.COLORMAP_JET
-            )
-            input_image_vis = (input_images[rotate_idx, :, :, :] * 255).astype(np.uint8)
-            input_image_vis = cv2.resize(
-                input_image_vis, (0, 0), fx=0.5, fy=0.5, interpolation=cv2.INTER_NEAREST
-            )
-            affordance_vis = (
-                0.5 * cv2.cvtColor(input_image_vis, cv2.COLOR_RGB2BGR)
-                + 0.5 * affordance_vis
-            ).astype(np.uint8)
-            if rotate_idx == best_pix_ind[0]:
-                affordance_vis = cv2.circle(
-                    affordance_vis,
-                    (int(best_pix_ind[2]), int(best_pix_ind[1])),
-                    7,
-                    (0, 0, 255),
-                    2,
-                )
-            if tmp_row_vis is None:
-                tmp_row_vis = affordance_vis
-            else:
-                tmp_row_vis = np.concatenate((tmp_row_vis, affordance_vis), axis=1)
-        if vis is None:
-            vis = tmp_row_vis
-        else:
-            vis = np.concatenate((vis, tmp_row_vis), axis=0)
-
-    return vis
-
-
 def get_difference(color_heightmap, color_space, bg_color_heightmap):
     color_space = np.concatenate((color_space, np.asarray([[0.0, 0.0, 0.0]])), axis=0)
     color_space.shape = (color_space.shape[0], 1, 1, color_space.shape[1])
@@ -362,12 +162,10 @@ def get_difference(color_heightmap, color_space, bg_color_heightmap):
 
     # Compute nearest neighbor distances to key colors
     key_color_dist = np.sqrt(np.sum(np.power(color_heightmap - color_space, 2), axis=3))
-    # key_color_dist_prob = F.softmax(Variable(torch.from_numpy(key_color_dist), volatile=True), dim=0).data.numpy()
 
     bg_key_color_dist = np.sqrt(
         np.sum(np.power(bg_color_heightmap - color_space, 2), axis=3)
     )
-    # bg_key_color_dist_prob = F.softmax(Variable(torch.from_numpy(bg_key_color_dist), volatile=True), dim=0).data.numpy()
 
     key_color_match = np.argmin(key_color_dist, axis=0)
     bg_key_color_match = np.argmin(bg_key_color_dist, axis=0)
@@ -474,8 +272,6 @@ def rotm2angle(R):
         and (abs(R[0][2] - R[2][0]) < epsilon)
         and (abs(R[1][2] - R[2][1]) < epsilon)
     ):
-        # Singularity found
-        # First check for identity matrix which must have +1 for all terms in leading diagonaland zero in other terms
         if (
             (abs(R[0][1] + R[1][0]) < epsilon2)
             and (abs(R[0][2] + R[2][0]) < epsilon2)
