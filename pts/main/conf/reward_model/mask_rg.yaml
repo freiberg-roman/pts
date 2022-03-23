@@ -1,20 +1,25 @@
 name: "mask_rg"
 
-path_store_weights: "."
-path_load_weights: "."
+path_store_weights: "/home/roman/shelf/"
+path_load_weights: "/home/roman/shelf/rg_net_test.pth"
 confidence_threshold: 0.75
 mask_threshold: 0.75
 
 train:
-  dataset_path: "."
-  images: "."
-  masks: "."
-  epochs: 20
+  epochs: 3
   lr: 0.0001
   batch_size: 5
   backbone: resnet50
   backbone_pretrained: True
   cuda_available: False
 
+dataset:
+  dataset_path: "/home/roman/shelf/test-ds/"
+  base_rgb: ""
+  base_seg: "_seg"
+  base_depth: "_depth"
+  mask_dir: "mask/"
+  depth_dir: "depth/"
+
 test:
-  path_test_image: "./test.png"
+  path_test_image: "/home/roman/shelf/test.png"

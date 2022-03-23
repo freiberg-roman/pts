@@ -8,7 +8,7 @@ from pts.utils.image_helper import CrossEntropyLoss2d, get_heightmap
 
 def train_dqn(cfg_dqn, cfg_rg, cfg_env):
     # ### Initializing ###
-    mask_rg_net = MaskRG(cfg_rg, train=False)  # network is in testing mode
+    mask_rg_net = MaskRG(cfg_rg)  # network is in testing mode
     success_threshold = cfg_dqn.success_threshold
     ws_limits = cfg_env.workspace_limit
     heightmap_res = cfg_env.heightmap_resolution

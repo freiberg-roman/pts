@@ -106,7 +106,7 @@ class MaskRGNetwork(nn.Module):
                     sys.exit(1)
 
                 self.optimizer.zero_grad()
-                losses.backwards()
+                losses_reduced.backward()
                 self.optimizer.step()
 
     def evaluate_model(self):
@@ -124,22 +124,19 @@ class MaskRGNetwork(nn.Module):
         return preds
 
     def load_weights(self):
-        self.mask_r_cnn.load_state_dict(torch.load(self.weights_path))
-
-    def set_data(self, data, is_test=False):
-
-        data_subset = (
-            td.Subset(data, self.train_indices)
-            if not is_test
-            else td.Subset(data, self.test_indices)
+        self.mask_r_cnn.load_state_dict(
+            torch.load(self.weights_path, map_location=torch.device("cpu"))
         )
+
+    def set_data(self, data):
+
+        data_subset = td.Subset(data, list(range(0, len(data))))
 
         # init a data loader either for training or testing
         self.data_loader = td.DataLoader(
-            data_subset,
+            data,
             batch_size=self.batch_size,
             shuffle=False,
-            num_workers=6,
             collate_fn=lambda x: tuple(zip(*x)),
         )
 
@@ -344,15 +341,16 @@ class RewardGenerator(object):
 
 
 class MaskRG:
-    def __init__(self, cfg_rg, train=False):
-        self.model = MaskRGNetwork(cfg_rg, train)
+    def __init__(self, cfg_rg):
+        self.model = MaskRGNetwork(cfg_rg)
+        self.model.load_weights()
         self.rg = RewardGenerator(cfg_rg.confidence_threshold, cfg_rg.mask_threshold)
         self.prediction = None
         self.gt = None
 
     def set_reward_generator(self, depth_image, gt_segmentation):
         depth_image = np.round(depth_image / 20).astype(np.uint8)
-        depth_image = np.repeat(depth_image.reshape(1024, 1024, 1), 3, axis=2)
+        depth_image = np.repeat(depth_image.reshape(1000, 1000, 1), 3, axis=2)
         with torch.no_grad():
             tt = T.ToTensor()
             depth_tensor = tt(depth_image)

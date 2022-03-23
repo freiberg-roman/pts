@@ -8,6 +8,7 @@ from torchvision.utils import draw_bounding_boxes
 from pts.gen import generate
 from pts.main import train_dqn
 from pts.models import MaskRGNetwork
+from pts.utils.ds_loader import PTSDataset
 from pts.utils.image_helper import show
 
 
@@ -18,7 +19,9 @@ def run(cfg: DictConfig):
 
     if cfg.mode == "train_rg":
         rg_net = MaskRGNetwork(cfg.reward_model)
-        # rg_net.train_model()
+        ds_loader = PTSDataset(cfg.reward_model.dataset)
+        rg_net.set_data(ds_loader)
+        rg_net.train_model()
         rg_net.save_model()
 
     if cfg.mode == "test_rg":
