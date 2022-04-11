@@ -14,7 +14,7 @@ from pts.utils.iter.RndObjectIter import RndMJObjectIter
 from pts.utils.iter.RndPoseIter import RndPoseIter
 
 
-def generate(cfg_gen: DictConfig):
+def generate(cfg_gen: DictConfig, save_to=""):
 
     # ### Scene creation ###
 
@@ -84,11 +84,11 @@ def generate(cfg_gen: DictConfig):
         plt.imshow(seg_img), plt.show()
         plt.imshow(rgb), plt.show()
         cv.imwrite(
-            "%d.png" % i,
+            save_to + "%d.png" % i,
             cv.cvtColor(rgb, cv.COLOR_RGB2BGR),
         )
-        np.save("%d_depth.npy" % i, depth)
-        np.save("%d_seg.npy" % i, seg_img)
+        np.save(save_to + "%d_depth.npy" % i, depth)
+        np.save(save_to + "%d_seg.npy" % i, seg_img)
         print(
             "Iteration: "
             + str(i + 1)

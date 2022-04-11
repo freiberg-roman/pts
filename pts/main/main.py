@@ -15,7 +15,7 @@ from pts.utils.image_helper import show
 @hydra.main(config_path="conf", config_name="main")
 def run(cfg: DictConfig):
     if cfg.mode == "gen":
-        generate(cfg.env)
+        generate(cfg.env, save_to=cfg.save_data_to)
 
     if cfg.mode == "train_rg":
         rg_net = MaskRGNetwork(cfg.reward_model)

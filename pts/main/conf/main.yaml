@@ -1,12 +1,12 @@
 defaults:
   - _self_
-  - gen: gen
   - eval_model: push_dqn
   - reward_model: mask_rg
   - env: mujoco_scene
 
 root_dir: "./exp"
-mode: "train_dqn"  # others are 'train_rg', 'train_dqn' and 'test',
+save_data_to: ""
+mode: "gen"  # others are 'train_rg', 'train_dqn' and 'test',
 
 hydra:
   run:
