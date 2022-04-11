@@ -10,7 +10,7 @@ from torch.autograd import Variable
 
 class ReactiveNet(nn.Module):
     def __init__(self, use_cuda):  # , snapshot=None
-        super(reactive_net, self).__init__()
+        super(ReinforcementNet, self).__init__()
         self.use_cuda = use_cuda
 
         # Initialize network trunks with DenseNet pre-trained on ImageNet

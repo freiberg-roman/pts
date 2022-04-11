@@ -1,29 +1,19 @@
-import cv2
 import numpy as np
 
 from pts.models import MaskRG, Trainer
 from pts.sim.train_scene import TrainScene
-from pts.utils.image_helper import CrossEntropyLoss2d, get_heightmap
+from pts.utils.image_helper import get_heightmap
 
 
 def train_dqn(cfg_dqn, cfg_rg, cfg_env):
-    # ### Initializing ###
     mask_rg_net = MaskRG(cfg_rg)  # network is in testing mode
     success_threshold = cfg_dqn.success_threshold
     ws_limits = cfg_env.workspace_limit
     heightmap_res = cfg_env.heightmap_resolution
-    min_obj = cfg_env.min_number_objects
-    max_obj = cfg_env.max_number_objects
-    session_limits = cfg_env.session_limit
-    gamma = cfg_dqn.discount
-    seed = cfg_dqn.seed
-    explore_prob = cfg_dqn.explore_probability
 
     train_scene = TrainScene(cfg_env)
     trainer = Trainer(cfg_dqn.train.lr, cfg_dqn.train.gamma, cfg_dqn.train.rg_model)
     train_scene.create_testing_scenario()
-
-    # ### Common subroutines ###
 
     def best_push_prediction(push_prediction, exploration=False):
         if not exploration and push_prediction is not None:
@@ -35,14 +25,11 @@ def train_dqn(cfg_dqn, cfg_rg, cfg_env):
                 np.random.random_integers(0, 224 - 1),
             )
 
-    # ### Init run ###
+    # ### Preprocessing ###
     rgb, depth = train_scene.get_camera_data()
     seg = train_scene.get_data_mask_rg()
-
-    # ### Preprocessing ###
     seg[seg == 1] = 0
 
-    # ### Loop ###
     prev_seg_reward = 0
     color_heightmap, depth_heightmap = get_heightmap(
         rgb,
@@ -118,4 +105,4 @@ def train_dqn(cfg_dqn, cfg_rg, cfg_env):
             seg_rew,
             change_detected,
         )
-        loss_val = trainer.backprop(prev_pix_ind, label_val)
+        trainer.backprop(prev_pix_ind, label_val)

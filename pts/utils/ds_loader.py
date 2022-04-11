@@ -1,7 +1,5 @@
 import os
 
-import matplotlib.patches as patches
-import matplotlib.pyplot as plt
 import numpy as np
 import torch
 import torchvision.transforms as T
@@ -51,10 +49,12 @@ class PTSDataset:
         image_id = torch.tensor([idx])
         area = (boxes[:, 3] - boxes[:, 1]) * (boxes[:, 2] - boxes[:, 0])
 
-        # If there is no object on the scene, this will be used to ignore that instance during coco eval
+        # If there is no object on the scene,
+        # this will be used to ignore that instance during coco eval
         iscrowd = torch.zeros((num_obj,), dtype=torch.int64)
 
-        # this control is to solve 'loss is NaN error' during training which can be a result of an invalid box
+        # this control is to solve 'loss is NaN error'
+        # during training which can be a result of an invalid box
         keep = (boxes[:, 3] > boxes[:, 1]) & (boxes[:, 2] > boxes[:, 0])
         boxes = boxes[keep]
         masks = masks[keep]

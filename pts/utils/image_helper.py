@@ -1,7 +1,5 @@
 import math
-import struct
 
-import cv2
 import matplotlib.pyplot as plt
 import numpy as np
 import torch.nn as nn
@@ -98,9 +96,6 @@ def get_heightmap(
 
     surface_pts = surface_pts[heightmap_valid_ind]
     color_pts = color_pts[heightmap_valid_ind]
-
-    # ax.scatter3D(surface_pts[:, 0], surface_pts[:, 1], surface_pts[:, 2], c=surface_pts[:, 2], cmap='hsv')
-    # plt.show()
 
     # Create orthographic top-down-view RGB-D heightmaps
     color_heightmap_r = np.zeros(
@@ -212,8 +207,8 @@ def euler2rotm(theta):
 def isRotm(R):
     Rt = np.transpose(R)
     shouldBeIdentity = np.dot(Rt, R)
-    I = np.identity(3, dtype=R.dtype)
-    n = np.linalg.norm(I - shouldBeIdentity)
+    Id = np.identity(3, dtype=R.dtype)
+    n = np.linalg.norm(Id - shouldBeIdentity)
     return n < 1e-6
 
 

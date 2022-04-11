@@ -91,11 +91,9 @@ class MaskRGNetwork(nn.Module):
                 ]
 
                 loss_dict = self.mask_r_cnn(imgs, targets)
-
-                losses = sum(loss for loss in loss_dict.values())
-
-                # reduce losses over all GPUs for logging purposes
-                loss_dict_reduced = reduce_dict(loss_dict)
+                loss_dict_reduced = reduce_dict(
+                    loss_dict
+                )  # reduce losses over all GPUs
                 losses_reduced = sum(loss for loss in loss_dict_reduced.values())
 
                 loss_value = losses_reduced.item()
@@ -129,10 +127,6 @@ class MaskRGNetwork(nn.Module):
         )
 
     def set_data(self, data):
-
-        data_subset = td.Subset(data, list(range(0, len(data))))
-
-        # init a data loader either for training or testing
         self.data_loader = td.DataLoader(
             data,
             batch_size=self.batch_size,

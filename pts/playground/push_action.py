@@ -3,26 +3,15 @@ Simple setting for performing predefined push actions
 """
 import os
 import xml.etree.ElementTree as Et
-from copy import deepcopy
-from shutil import copyfile
-from xml.etree.ElementTree import Element
 
 import alr_sim.utils.geometric_transformation as gt
-import mujoco_py
 import numpy as np
-import pybullet as p
 from alr_sim.sims.mujoco.FreezableMujocoEnvironment import FreezableMujocoEnvironment
 from alr_sim.sims.mujoco.mj_utils.mujoco_scene_object import MujocoObject
-from alr_sim.sims.mujoco.mj_utils.mujoco_viewer import MujocoViewer
-from alr_sim.sims.mujoco.MujocoCamera import MujocoCamera
 from alr_sim.sims.mujoco.MujocoFactory import MujocoFactory
 from alr_sim.sims.mujoco.MujocoLoadable import MujocoXmlLoadable
-from alr_sim.sims.mujoco.MujocoRobot import MujocoRobot
-from alr_sim.sims.mujoco.MujocoScene import MujocoScene
 from alr_sim.sims.SimFactory import SimRepository
 from alr_sim.sims.universal_sim.PrimitiveObjects import Box
-from alr_sim.utils.geometric_transformation import quat2mat
-from mujoco_py import MjSim
 
 base_path = "/home/roman/projects/SimulationFramework/models/mujoco/surroundings/"
 
@@ -171,9 +160,6 @@ def set_pos(obj, pos, quat):
 
 
 def create_scene():
-    num_obj = np.random.random_integers(0, 4)
-    objects_order = np.random.random_integers(0, 3 - 1, num_obj)
-
     mujoco_factory = MujocoFactory()
     scene = mujoco_factory.create_scene()
     robot = mujoco_factory.create_robot(scene)
