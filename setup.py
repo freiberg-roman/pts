@@ -3,7 +3,8 @@ from setuptools import setup, find_packages
 
 
 def parse_requirements_file(path):
-    return [line.rstrip() for line in open(path, "r")]
+    with open(path, "r") as file:
+        return [line.rstrip() for line in file]
 
 
 reqs_main = parse_requirements_file("requirements/main.txt")

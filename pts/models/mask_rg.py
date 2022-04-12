@@ -17,7 +17,7 @@ from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
 from torchvision.models.detection.mask_rcnn import MaskRCNNPredictor
 
 from pts.utils.color_space import color_space, color_space_red
-from pts.utils.train_eval import evaluate, reduce_dict
+from pts.utils.train_eval import reduce_dict
 
 HEIGHT = 1024
 WIDTH = 1024
@@ -86,11 +86,11 @@ class MaskRGNetwork(nn.Module):
 
         wandb.init(project="train_rg_model", entity="freiberg-roman", config=self.conf)
 
-        for epoch in range(self.num_epochs):
+        for _ in range(self.num_epochs):
             self.mask_r_cnn.train()
 
             for imgs, targets in self.data_loader:
-                imgs = list(img.to(self.device) for img in imgs)
+                imgs = [img.to(self.device) for img in imgs]
                 targets = [
                     {k: v.to(self.device) for k, v in t.items()} for t in targets
                 ]
@@ -115,13 +115,6 @@ class MaskRGNetwork(nn.Module):
 
             if self.conf.train.store_model_each_epoch:
                 self.save_model()
-
-    def evaluate_model(self):
-        # evaluate on the test dataset
-        res = evaluate(
-            self.mask_r_cnn, self.data_loader, device=self.device, num_threads=12
-        )
-        return res
 
     def eval_single_img(self, img):
         self.mask_r_cnn.eval()
@@ -199,7 +192,7 @@ class MaskRGNetwork(nn.Module):
         print("num masks that have a score higher than .75 --> ", num_masks)
 
 
-class RewardGenerator(object):
+class RewardGenerator:
     def __init__(self, confidence_threshold=0.75, mask_threshold=0.75, device="cuda"):
 
         self.mask_threshold = mask_threshold
@@ -299,7 +292,7 @@ class RewardGenerator(object):
                 if res[0] > 0:
                     results.append([inx_pred, res[0]])
 
-            if not results == []:
+            if results != []:
                 res_arr = np.asarray(results)
                 max_index = np.argmax(res_arr, axis=0)
                 max_index = max_index[1]

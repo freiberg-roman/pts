@@ -5,7 +5,7 @@ from scipy import ndimage
 from pts.models import ReinforcementNet
 
 
-class Trainer(object):
+class Trainer:
     def __init__(self, cfg_dqn):
         self.gamma = cfg_dqn.train.gamma
         self.criterion = torch.nn.SmoothL1Loss(reduce=False)
@@ -24,7 +24,7 @@ class Trainer(object):
         self.model = ReinforcementNet(
             use_cuda=cfg_dqn.train.use_cuda and torch.cuda.is_available()
         )
-        if not cfg_dqn.train.pretrained_weights == "":
+        if cfg_dqn.train.pretrained_weights != "":
             self.model.load_state_dict(
                 torch.load(
                     cfg_dqn.train.pretrained_weights,

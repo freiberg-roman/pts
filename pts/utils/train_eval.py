@@ -2,8 +2,6 @@ import torch
 import torch.distributed as dist
 import torchvision
 
-from pts.utils.coco import CocoEvaluator, get_coco_api_from_dataset
-
 
 def is_dist_avail_and_initialized():
     if not dist.is_available():
@@ -56,40 +54,3 @@ def _get_iou_types(model):
     if isinstance(model_without_ddp, torchvision.models.detection.KeypointRCNN):
         iou_types.append("keypoints")
     return iou_types
-
-
-@torch.no_grad()
-def evaluate(model, data_loader, device, num_threads):
-    n_threads = torch.get_num_threads()
-
-    torch.set_num_threads(n_threads)
-    cpu_device = torch.device("cpu")
-    model.eval()
-
-    coco = get_coco_api_from_dataset(data_loader.dataset)
-    iou_types = _get_iou_types(model)
-
-    coco_evaluator = CocoEvaluator(coco, iou_types)
-
-    for images, targets in data_loader:
-        images = list(img.to(device) for img in images)
-        targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
-
-        torch.cuda.synchronize()
-        outputs = model(images)
-
-        outputs = [{k: v.to(cpu_device) for k, v in t.items()} for t in outputs]
-
-        res = {
-            target["image_id"].item(): output
-            for target, output in zip(targets, outputs)
-        }
-        coco_evaluator.update(res)
-
-    coco_evaluator.synchronize_between_processes()
-
-    # accumulate predictions from all images
-    coco_evaluator.accumulate()
-    coco_evaluator.summarize()
-    torch.set_num_threads(n_threads)
-    return coco_evaluator

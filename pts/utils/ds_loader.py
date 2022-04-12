@@ -59,13 +59,14 @@ class PTSDataset:
         boxes = boxes[keep]
         masks = masks[keep]
 
-        target = {}
-        target["boxes"] = boxes
-        target["labels"] = labels
-        target["masks"] = masks
-        target["image_id"] = image_id
-        target["area"] = area
-        target["iscrowd"] = iscrowd
+        target = {
+            "boxes": boxes,
+            "labels": labels,
+            "masks": masks,
+            "image_id": image_id,
+            "area": area,
+            "iscrowd": iscrowd,
+        }
 
         img_depth = T.ToTensor()(img_depth)
 
