@@ -6,15 +6,33 @@ from pts.models import ReinforcementNet
 
 
 class Trainer(object):
-    def __init__(self, lr, gamma, model_file):
+    def __init__(self, cfg_dqn):
+        self.gamma = cfg_dqn.train.gamma
+        self.criterion = torch.nn.SmoothL1Loss(reduce=False)
 
-        self.model = ReinforcementNet(use_cuda=False)
-        self.gamma = gamma
-        self.criterion = torch.nn.SmoothL1Loss(reduce=False)  # Huber loss
-        if not model_file == "":
-            self.model.load_state_dict(torch.load(model_file))
+        if cfg_dqn.train.use_cuda:
+            if torch.cuda.is_available():
+                self.device = "cuda"
+                print("CUDA device found!")
+            else:
+                print("WARNING: CUDA is not available!!! CPU will be used instead!")
+                self.device = "cpu"
+        else:
+            print("CPU will be used to train/evaluate the network!")
+            self.device = "cpu"
+
+        self.model = ReinforcementNet(
+            use_cuda=cfg_dqn.train.use_cuda and torch.cuda.is_available()
+        )
+        if not cfg_dqn.train.pretrained_weights == "":
+            self.model.load_state_dict(
+                torch.load(
+                    cfg_dqn.train.pretrained_weights,
+                    map_location=torch.device(self.device),
+                )
+            )
         self.model.train()
-        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=lr)
+        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=cfg_dqn.train.lr)
         self.epoch = 0
 
     def forward(

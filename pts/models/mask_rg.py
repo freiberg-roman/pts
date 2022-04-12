@@ -113,6 +113,9 @@ class MaskRGNetwork(nn.Module):
                 self.optimizer.step()
                 wandb.log({"loss": loss_value})
 
+            if self.conf.train.store_model_each_epoch:
+                self.save_model()
+
     def evaluate_model(self):
         # evaluate on the test dataset
         res = evaluate(

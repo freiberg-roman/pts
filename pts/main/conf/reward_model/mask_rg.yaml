@@ -6,7 +6,7 @@ confidence_threshold: 0.75
 mask_threshold: 0.75
 
 train:
-  store_model_each_epoch: True
+  store_model_each_epoch: False
   use_pretrained: True
   epochs: 3
   lr: 0.0001
