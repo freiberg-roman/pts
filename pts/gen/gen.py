@@ -94,6 +94,6 @@ def generate(cfg_gen: DictConfig, save_to=""):
             + str(i + 1)
             + " finished in "
             + str(time.time() - start_time)
-            + " ms."
+            + " s."
         )
         freezable.close()

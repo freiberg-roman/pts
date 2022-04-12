@@ -6,7 +6,7 @@ defaults:
 
 root_dir: "./exp"
 save_data_to: ""
-mode: "gen"  # others are 'train_rg', 'train_dqn' and 'test',
+mode: "test_rg"  # others are 'train_rg', 'train_dqn', 'test_rg' and 'test_dqn'
 
 hydra:
   run:

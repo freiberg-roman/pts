@@ -3,9 +3,9 @@ change_threshold: 100
 discount: 0.99
 seed: 0
 explore_probability: 0.1
+amount_pushes: 10
 
 train:
   maximum_iterations: 1000000
   lr: 0.0001
   gamma: 0.99
-  rg_model: ""

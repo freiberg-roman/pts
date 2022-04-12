@@ -6,7 +6,7 @@ from torchvision.transforms.functional import convert_image_dtype
 from torchvision.utils import draw_bounding_boxes
 
 from pts.gen import generate
-from pts.main import train_dqn
+from pts.main import test_dqn, train_dqn
 from pts.models import MaskRGNetwork
 from pts.utils.ds_loader import PTSDataset
 from pts.utils.image_helper import show
@@ -19,6 +19,9 @@ def run(cfg: DictConfig):
 
     if cfg.mode == "train_rg":
         rg_net = MaskRGNetwork(cfg.reward_model)
+        if cfg.reward_model.train.use_pretrained:
+            rg_net.load_weights()
+
         ds_loader = PTSDataset(cfg.reward_model.dataset)
         rg_net.set_data(ds_loader)
         rg_net.train_model()
@@ -43,6 +46,9 @@ def run(cfg: DictConfig):
 
     if cfg.mode == "train_dqn":
         train_dqn(cfg.eval_model, cfg.reward_model, cfg.env)
+
+    if cfg.mode == "test_dqn":
+        test_dqn(cfg.eval_model, cfg.reward_model, cfg.env)
 
 
 if __name__ == "__main__":

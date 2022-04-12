@@ -1,1 +1,1 @@
-from pts.main.routines import train_dqn  # noqa: F401
+from pts.main.routines import test_dqn, train_dqn  # noqa: F401

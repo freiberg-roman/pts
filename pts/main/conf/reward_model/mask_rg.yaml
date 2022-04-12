@@ -6,9 +6,11 @@ confidence_threshold: 0.75
 mask_threshold: 0.75
 
 train:
+  store_model_each_epoch: True
+  use_pretrained: True
   epochs: 3
   lr: 0.0001
-  batch_size: 5
+  batch_size: 2
   backbone: resnet50
   backbone_pretrained: True
   cuda_available: False

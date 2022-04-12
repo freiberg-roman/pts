@@ -11,6 +11,7 @@ import torch
 import torch.nn as nn
 import torchvision
 import torchvision.transforms as T
+from omegaconf import OmegaConf
 from torch.utils import data as td
 from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
 from torchvision.models.detection.mask_rcnn import MaskRCNNPredictor
@@ -78,8 +79,12 @@ class MaskRGNetwork(nn.Module):
         # construct an optimizer
         self.params = [p for p in self.mask_r_cnn.parameters() if p.requires_grad]
         self.optimizer = torch.optim.Adam(self.params, lr=self.lr)
+        self.conf = OmegaConf.to_container(cfg_rg)
 
     def train_model(self):
+        import wandb
+
+        wandb.init(project="train_rg_model", entity="freiberg-roman", config=self.conf)
 
         for epoch in range(self.num_epochs):
             self.mask_r_cnn.train()
@@ -106,6 +111,7 @@ class MaskRGNetwork(nn.Module):
                 self.optimizer.zero_grad()
                 losses_reduced.backward()
                 self.optimizer.step()
+                wandb.log({"loss": loss_value})
 
     def evaluate_model(self):
         # evaluate on the test dataset
@@ -123,7 +129,7 @@ class MaskRGNetwork(nn.Module):
 
     def load_weights(self):
         self.mask_r_cnn.load_state_dict(
-            torch.load(self.weights_path, map_location=torch.device("cpu"))
+            torch.load(self.weights_path, map_location=self.device)
         )
 
     def set_data(self, data):

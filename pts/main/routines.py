@@ -106,3 +106,7 @@ def train_dqn(cfg_dqn, cfg_rg, cfg_env):
             change_detected,
         )
         trainer.backprop(prev_pix_ind, label_val)
+
+
+def test_dqn(cfg_dqn, cfg_rg, cfg_env):
+    pass
