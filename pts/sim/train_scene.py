@@ -95,6 +95,10 @@ class TrainScene:
         rgb, depth = self.freezable.scene.get_cage_cam().get_image(depth=True)
         return rgb, depth
 
+    def get_point_cloud(self):
+        points, colors = self.freezable.scene.get_cage_cam().calc_point_cloud()
+        return points, colors
+
     def get_data_mask_rg(self):
         gt = self.freezable.scene.get_cage_cam().get_segmentation(
             height=1000, width=1000, depth=False

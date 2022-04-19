@@ -115,12 +115,13 @@ def test_dqn(cfg_dqn, cfg_rg, cfg_env):
     r_net = ReinforcementNet(
         use_cuda=cfg_dqn.train.use_cuda and torch.cuda.is_available()
     )
-    r_net.load_state_dict(
-        torch.load(
-            cfg_dqn.path_load_weights,
-            map_location=torch.device("cuda" if torch.cuda.is_available() else "cpu"),
-        )
-    )
+    # TODO
+    # r_net.load_state_dict(
+    #     torch.load(
+    #         cfg_dqn.path_load_weights,
+    #         map_location=torch.device("cuda" if torch.cuda.is_available() else "cpu"),
+    #     )
+    # )
     ws_limits = cfg_env.workspace_limit
     heightmap_res = cfg_env.heightmap_resolution
     train_scene = TrainScene(cfg_env)
@@ -260,11 +261,10 @@ def test_dqn(cfg_dqn, cfg_rg, cfg_env):
         return push_predictions
 
     # ### Compute prediction ###
-    rgb, depth = train_scene.get_camera_data()
+    points, colors = train_scene.get_point_cloud()
     color_heightmap, depth_heightmap = get_heightmap(
-        rgb,
-        depth,
-        train_scene.cam_intrinsics,
+        points,
+        colors,
         train_scene.get_cam_pose(),
         ws_limits,
         heightmap_res,
