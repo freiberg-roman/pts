@@ -1,8 +1,6 @@
 import numpy as np
-import torch
-from scipy import ndimage
 
-from pts.models import MaskRG, ReinforcementNet, Trainer
+from pts.models import MaskRG, Trainer
 from pts.sim.train_scene import TrainScene
 from pts.utils.image_helper import get_heightmap
 
@@ -27,25 +25,24 @@ def train_dqn(cfg_dqn, cfg_rg, cfg_env):
                 np.random.random_integers(0, 224 - 1),
             )
 
-    # ### Preprocessing ###
+    points, colors = train_scene.get_point_cloud()
     rgb, depth = train_scene.get_camera_data()
     seg = train_scene.get_data_mask_rg()
     seg[seg == 1] = 0
 
-    prev_seg_reward = 0
+    # ### Preprocessing ###
     color_heightmap, depth_heightmap = get_heightmap(
-        rgb,
-        depth,
-        train_scene.cam_intrinsics,
+        points,
+        colors,
         train_scene.get_cam_pose(),
         ws_limits,
         heightmap_res,
     )
     valid_depth_heightmap = depth_heightmap.copy()
     valid_depth_heightmap[np.isnan(valid_depth_heightmap)] = 0
-    push_pred = trainer.forward(
-        color_heightmap, valid_depth_heightmap, is_volatile=True
-    )
+
+    prev_seg_reward = 0
+    push_pred = trainer.forward(color_heightmap, valid_depth_heightmap)
 
     # first push is uninformed (will not be counted as iteration)
     # train_scene.push_at(0.5, 0.0)
@@ -110,155 +107,12 @@ def train_dqn(cfg_dqn, cfg_rg, cfg_env):
         trainer.backprop(prev_pix_ind, label_val)
 
 
-def test_dqn(cfg_dqn, cfg_rg, cfg_env):
-    # ### Set up ###
-    r_net = ReinforcementNet(
-        use_cuda=cfg_dqn.train.use_cuda and torch.cuda.is_available()
-    )
-    # TODO
-    # r_net.load_state_dict(
-    #     torch.load(
-    #         cfg_dqn.path_load_weights,
-    #         map_location=torch.device("cuda" if torch.cuda.is_available() else "cpu"),
-    #     )
-    # )
+def test_dqn(cfg_dqn, cfg_env):
     ws_limits = cfg_env.workspace_limit
     heightmap_res = cfg_env.heightmap_resolution
     train_scene = TrainScene(cfg_env)
     train_scene.create_testing_scenario()
-
-    def forward(color_heightmap, depth_heightmap, specific_rotation=-1):
-
-        # Apply 2x scale to input heightmaps
-        color_heightmap_2x = ndimage.zoom(color_heightmap, zoom=[2, 2, 1], order=0)
-        depth_heightmap_2x = ndimage.zoom(depth_heightmap, zoom=[2, 2], order=0)
-        assert color_heightmap_2x.shape[0:2] == depth_heightmap_2x.shape[0:2]
-
-        # Add extra padding (to handle rotations inside network)
-        diag_length = float(color_heightmap_2x.shape[0]) * np.sqrt(2)
-        diag_length = np.ceil(diag_length / 32) * 32
-        padding_width = int((diag_length - color_heightmap_2x.shape[0]) / 2)
-        color_heightmap_2x_r = np.pad(
-            color_heightmap_2x[:, :, 0], padding_width, "constant", constant_values=0
-        )
-        color_heightmap_2x_r.shape = (
-            color_heightmap_2x_r.shape[0],
-            color_heightmap_2x_r.shape[1],
-            1,
-        )
-        color_heightmap_2x_g = np.pad(
-            color_heightmap_2x[:, :, 1], padding_width, "constant", constant_values=0
-        )
-        color_heightmap_2x_g.shape = (
-            color_heightmap_2x_g.shape[0],
-            color_heightmap_2x_g.shape[1],
-            1,
-        )
-        color_heightmap_2x_b = np.pad(
-            color_heightmap_2x[:, :, 2], padding_width, "constant", constant_values=0
-        )
-        color_heightmap_2x_b.shape = (
-            color_heightmap_2x_b.shape[0],
-            color_heightmap_2x_b.shape[1],
-            1,
-        )
-        color_heightmap_2x = np.concatenate(
-            (color_heightmap_2x_r, color_heightmap_2x_g, color_heightmap_2x_b), axis=2
-        )
-        depth_heightmap_2x = np.pad(
-            depth_heightmap_2x, padding_width, "constant", constant_values=0
-        )
-
-        # Pre-process color image (scale and normalize)
-        image_mean = [0.485, 0.456, 0.406]
-        image_std = [0.229, 0.224, 0.225]
-        input_color_image = color_heightmap_2x.astype(float) / 255
-        for c in range(3):
-            input_color_image[:, :, c] = (
-                input_color_image[:, :, c] - image_mean[c]
-            ) / image_std[c]
-
-        # Pre-process depth image (normalize)
-        image_mean = [0.01, 0.01, 0.01]
-        image_std = [0.03, 0.03, 0.03]
-        depth_heightmap_2x.shape = (
-            depth_heightmap_2x.shape[0],
-            depth_heightmap_2x.shape[1],
-            1,
-        )
-        input_depth_image = np.concatenate(
-            (depth_heightmap_2x, depth_heightmap_2x, depth_heightmap_2x), axis=2
-        )
-        for c in range(3):
-            input_depth_image[:, :, c] = (
-                input_depth_image[:, :, c] - image_mean[c]
-            ) / image_std[c]
-
-        # Construct minibatch of size 1 (b,c,h,w)
-        input_color_image.shape = (
-            input_color_image.shape[0],
-            input_color_image.shape[1],
-            input_color_image.shape[2],
-            1,
-        )
-        input_depth_image.shape = (
-            input_depth_image.shape[0],
-            input_depth_image.shape[1],
-            input_depth_image.shape[2],
-            1,
-        )
-        input_color_data = torch.from_numpy(
-            input_color_image.astype(np.float32)
-        ).permute(3, 2, 0, 1)
-        input_depth_data = torch.from_numpy(
-            input_depth_image.astype(np.float32)
-        ).permute(3, 2, 0, 1)
-
-        # Pass input data through model
-        # output_prob, state_feat
-        output_prob = r_net.forward(
-            input_color_data, input_depth_data, specific_rotation
-        )
-
-        # Return Q values (and remove extra padding)
-        for rotate_idx in range(len(output_prob)):
-            # if first rotation
-            if rotate_idx == 0:
-                push_predictions = (
-                    output_prob[rotate_idx][0]
-                    .cpu()
-                    .data.numpy()[
-                        :,
-                        0,
-                        int(padding_width / 2) : int(
-                            color_heightmap_2x.shape[0] / 2 - padding_width / 2
-                        ),
-                        int(padding_width / 2) : int(
-                            color_heightmap_2x.shape[0] / 2 - padding_width / 2
-                        ),
-                    ]
-                )
-            else:
-                push_predictions = np.concatenate(
-                    (
-                        push_predictions,
-                        output_prob[rotate_idx][0]
-                        .cpu()
-                        .data.numpy()[
-                            :,
-                            0,
-                            int(padding_width / 2) : int(
-                                color_heightmap_2x.shape[0] / 2 - padding_width / 2
-                            ),
-                            int(padding_width / 2) : int(
-                                color_heightmap_2x.shape[0] / 2 - padding_width / 2
-                            ),
-                        ],
-                    ),
-                    axis=0,
-                )
-
-        return push_predictions
+    trainer = Trainer(cfg_dqn)
 
     # ### Compute prediction ###
     points, colors = train_scene.get_point_cloud()
@@ -271,7 +125,7 @@ def test_dqn(cfg_dqn, cfg_rg, cfg_env):
     )
     valid_depth_heightmap = depth_heightmap.copy()
     valid_depth_heightmap[np.isnan(valid_depth_heightmap)] = 0
-    push_pred = forward(color_heightmap, valid_depth_heightmap, is_volatile=True)
+    push_pred = trainer.forward(color_heightmap, valid_depth_heightmap)
 
     # ### Execute push ###
     max_pred = np.unravel_index(np.argmax(push_pred), push_pred.shape)
