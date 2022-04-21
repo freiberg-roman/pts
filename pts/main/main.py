@@ -48,7 +48,7 @@ def run(cfg: DictConfig):
         train_dqn(cfg.eval_model, cfg.reward_model, cfg.env)
 
     if cfg.mode == "test_dqn":
-        test_dqn(cfg.eval_model, cfg.reward_model, cfg.env)
+        test_dqn(cfg.eval_model, cfg.env)
 
 
 if __name__ == "__main__":

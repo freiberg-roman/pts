@@ -46,6 +46,7 @@ def get_heightmap(
 
     points = points[heightmap_valid_ind]
     colors = colors[heightmap_valid_ind]
+    colors = np.uint8(colors * 255)
 
     # Create orthographic top-down-view RGB-D heightmaps
     color_heightmap_r = np.zeros(
