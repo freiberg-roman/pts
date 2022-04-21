@@ -15,22 +15,26 @@ def train_dqn(cfg_dqn, cfg_rg, cfg_env):
     trainer = Trainer(cfg_dqn)
     train_scene.create_testing_scenario()
 
-    def best_push_prediction(push_prediction, exploration=False):
+    def predict_push_position(push_prediction, exploration=False, size=None):
         if not exploration and push_prediction is not None:
-            return np.unravel_index(np.argmax(push_prediction), push_prediction.shape)
-        else:
-            return (
-                np.random.random_integers(0, 15),
-                np.random.random_integers(0, 224 - 1),
-                np.random.random_integers(0, 224 - 1),
+            pix_ind = np.unravel_index(
+                np.argmax(push_prediction), push_prediction.shape
             )
+        else:
+            pix_ind = (
+                np.random.random_integers(0, size[0]),
+                np.random.random_integers(0, size[1]),
+                np.random.random_integers(0, size[2]),
+            )
+        x_push, y_push = (
+            pix_ind[2] * heightmap_res + ws_limits[0][0],
+            pix_ind[1] * heightmap_res + ws_limits[1][0],
+        )
 
+        return x_push, y_push
+
+    # ### Get initial scene data ###
     points, colors = train_scene.get_point_cloud()
-    rgb, depth = train_scene.get_camera_data()
-    seg = train_scene.get_data_mask_rg()
-    seg[seg == 1] = 0
-
-    # ### Preprocessing ###
     color_heightmap, depth_heightmap = get_heightmap(
         points,
         colors,
@@ -38,58 +42,40 @@ def train_dqn(cfg_dqn, cfg_rg, cfg_env):
         ws_limits,
         heightmap_res,
     )
-    valid_depth_heightmap = depth_heightmap.copy()
-    valid_depth_heightmap[np.isnan(valid_depth_heightmap)] = 0
-
-    prev_seg_reward = 0
-    push_pred = trainer.forward(color_heightmap, valid_depth_heightmap)
-
-    # first push is uninformed (will not be counted as iteration)
-    # train_scene.push_at(0.5, 0.0)
+    seg_reward = 0
 
     for i in range(cfg_dqn.train.maximum_iterations):
-        prev_valid_depth_heightmap = valid_depth_heightmap.copy()
-        prev_pix_ind = best_push_prediction(push_pred, exploration=True)
-
         # ### Execute Push ###
-        mask_rg_net.set_reward_generator(depth, seg)
-        pred_ids, seg_rew, err = mask_rg_net.get_current_rewards()
-        color_heightmap, depth_heightmap = get_heightmap(
-            rgb,
-            depth,
-            train_scene.cam_intrinsics,
-            train_scene.cam_pose,
-            ws_limits,
-            heightmap_res,
-        )
-
-        valid_depth_heightmap = depth_heightmap.copy()
-        valid_depth_heightmap[np.isnan(valid_depth_heightmap)] = 0
-        push_pred = trainer.forward(
-            color_heightmap, valid_depth_heightmap, is_volatile=True
-        )
-
-        pix_ind = best_push_prediction(push_pred, exploration=True)
-
-        x_push, y_push = (
-            pix_ind[2] * heightmap_res + ws_limits[0][0],
-            pix_ind[1] * heightmap_res + ws_limits[1][0],
+        push_pred = trainer.forward(color_heightmap, depth_heightmap)
+        x_push, y_push = predict_push_position(
+            push_pred, exploration=False, size=push_pred.shape
         )
         train_scene.push_at(x_push, y_push)
 
+        # ### Store old data and get new scene data ###
+        prev_depth_heightmap = depth_heightmap
+        prev_seg_reward = seg_reward
+
+        points, colors = train_scene.get_point_cloud()
+        color_heightmap, depth_heightmap = get_heightmap(
+            points,
+            colors,
+            train_scene.get_cam_pose(),
+            ws_limits,
+            heightmap_res,
+        )
         rgb, depth = train_scene.get_camera_data()
-        seg = train_scene.get_data_mask_rg()
+        seg, num_obj = train_scene.get_object_segmentation()
 
-        # ### Preprocessing ###
-
-        seg[seg == 1] = 0  # two stands for table
+        # ### Compute reward ###
         mask_rg_net.set_reward_generator(depth, seg)
+        _, seg_reward, _ = mask_rg_net.get_current_rewards()
 
         # ### Compute change for evaluation ###
-        diff_depth = abs(valid_depth_heightmap - prev_valid_depth_heightmap)
+        diff_depth = abs(depth_heightmap - prev_depth_heightmap)
         diff_depth[diff_depth > 0] = 1
         change_detected = np.sum(diff_depth) > cfg_dqn.change_threshold
-        success_action = seg_rew > success_threshold
+        success_action = seg_reward > success_threshold
 
         if success_action:
             print("Success after:", i, " iterations.")
@@ -97,14 +83,14 @@ def train_dqn(cfg_dqn, cfg_rg, cfg_env):
 
         # ### Update network ###
 
-        label_val, prev_reward_val, seg_val = trainer.get_reward_value(
+        label_val, _, _ = trainer.get_reward_value(
             color_heightmap,
-            valid_depth_heightmap,
+            depth_heightmap,
             prev_seg_reward,
-            seg_rew,
+            seg_reward,
             change_detected,
         )
-        trainer.backprop(prev_pix_ind, label_val)
+        trainer.backprop((x_push, y_push), label_val)
 
 
 def test_dqn(cfg_dqn, cfg_env):
@@ -123,9 +109,7 @@ def test_dqn(cfg_dqn, cfg_env):
         ws_limits,
         heightmap_res,
     )
-    valid_depth_heightmap = depth_heightmap.copy()
-    valid_depth_heightmap[np.isnan(valid_depth_heightmap)] = 0
-    push_pred = trainer.forward(color_heightmap, valid_depth_heightmap)
+    push_pred = trainer.forward(color_heightmap, depth_heightmap)
 
     # ### Execute push ###
     max_pred = np.unravel_index(np.argmax(push_pred), push_pred.shape)

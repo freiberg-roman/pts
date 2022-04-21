@@ -99,11 +99,18 @@ class TrainScene:
         points, colors = self.freezable.scene.get_cage_cam().calc_point_cloud()
         return points, colors
 
-    def get_data_mask_rg(self):
-        gt = self.freezable.scene.get_cage_cam().get_segmentation(
+    def get_object_segmentation(self):
+        seg = self.freezable.scene.get_cage_cam().get_segmentation(
             height=1000, width=1000, depth=False
         )
-        return gt
+
+        # ### Make segmentations labels unique ###
+        obj_ids = np.unique(seg)
+        num_obj = len(obj_ids)
+        for i in range(num_obj):
+            seg[seg == obj_ids[i]] = i
+
+        return seg, num_obj
 
     def move_to(
         self, tool_position, tool_orientation, beam=False, duration=None, nsteps=1

@@ -76,7 +76,7 @@ def get_heightmap(
     z_bottom = workspace_limits[2][0]
     depth_heightmap = depth_heightmap - z_bottom
     depth_heightmap[depth_heightmap < 0] = 0
-    depth_heightmap[depth_heightmap == -z_bottom] = np.nan
+    depth_heightmap[depth_heightmap == -z_bottom] = 0
     return color_heightmap, depth_heightmap
 
 

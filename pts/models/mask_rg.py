@@ -345,11 +345,9 @@ class MaskRG:
         self.gt = None
 
     def set_reward_generator(self, depth_image, gt_segmentation):
-        depth_image = np.round(depth_image / 20).astype(np.uint8)
         depth_image = np.repeat(depth_image.reshape(1000, 1000, 1), 3, axis=2)
         with torch.no_grad():
-            tt = T.ToTensor()
-            depth_tensor = tt(depth_image)
+            depth_tensor = T.ToTensor()(depth_image)
             self.prediction = self.model.eval_single_img([depth_tensor])
 
         self.gt = gt_segmentation
@@ -358,9 +356,3 @@ class MaskRG:
 
     def get_current_rewards(self):
         return self.rg.get_reward()
-
-    def print_segmentation(self, pred_ids):
-        return self.rg.print_seg_diff(pred_ids)
-
-    def print_masks(self):
-        return self.rg.print_masks()
