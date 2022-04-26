@@ -7,7 +7,7 @@
     <worldbody>
         <body name="shape_run_001_it_000001" pos="0.313867864294198 -0.10994705078077992 0.5" quat="-0.19112042121772124 -0.9516598721735332 -0.24004759657627098 -0.013914872121978152">
             <freejoint name="4:joint" />
-            <geom quat="0.707107 0 0.707107 0" type="mesh" rgba="0 1 0 1" mesh="4" density="500" friction="1" />
+            <geom quat="0.707107 0 -0.707107 0" rgba="0 1 0 1" mesh="4" type="mesh" solimp="0.998 0.998 0.001" solref="0.001 1" density="50" friction="0.95 0.3 0.1" condim="4"/>
         </body>
     </worldbody>
 </mujoco>

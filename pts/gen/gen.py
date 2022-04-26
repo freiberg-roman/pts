@@ -2,12 +2,12 @@ import os
 import time
 
 import alr_sim.utils.geometric_transformation as gt
-import cv2 as cv
 import matplotlib.pyplot as plt
 import numpy as np
 from alr_sim.sims.mujoco.FreezableMujocoEnvironment import FreezableMujocoEnvironment
 from alr_sim.sims.SimFactory import SimRepository
 from alr_sim.sims.universal_sim.PrimitiveObjects import Box
+from cv2 import cv2 as cv
 from omegaconf import DictConfig
 
 from pts.utils.iter.RndObjectIter import RndMJObjectIter

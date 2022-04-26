@@ -18,8 +18,6 @@ meshes:
                                           # such as "./000/000.urdf" in this folder. If you want to keep them
                                           # with a different folder organisation or different file name format,
                                           # string parsing format should be adapted in the code!
-  # camera_model: /simulation/envs/frankaemika/robots/camera.urdf
-  # bin_model: /simulation/envs/objects/bin/bin_simple.urdf
 
 data:
   save_numpy: True # Flag to save depth images and segmentation masks as numpy arrays

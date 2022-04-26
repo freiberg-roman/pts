@@ -51,6 +51,7 @@ def train_dqn(cfg_dqn, cfg_rg, cfg_env):
             push_pred, exploration=False, size=push_pred.shape
         )
         train_scene.push_at(x_push, y_push)
+        train_scene.beam_back()
 
         # ### Store old data and get new scene data ###
         prev_depth_heightmap = depth_heightmap

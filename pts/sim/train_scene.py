@@ -106,7 +106,7 @@ class TrainScene:
 
         # ### Make segmentations labels unique ###
         obj_ids = np.unique(seg)
-        num_obj = len(obj_ids)
+        num_obj = len(obj_ids) - 1  # remove background
         for i in range(num_obj):
             seg[seg == obj_ids[i]] = i
 
@@ -142,7 +142,11 @@ class TrainScene:
             duration=duration / 2,
         )
 
-    def push_at(self, x, y, height=0.5, intermediate_steps=15):
+    def beam_back(self):
+        with self.freezable as _:
+            pass
+
+    def push_at(self, x, y, height=0.5, intermediate_steps=3):
         # goto position above
         self.freezable.robot.gotoCartPositionAndQuat(
             desiredPos=[x, y, height], desiredQuat=[0, 1, 0, 0], duration=4.0

@@ -1,7 +1,7 @@
 name: "mask_rg"
 
-path_store_weights: "/home/roman/shelf/"
-path_load_weights: "/home/roman/shelf/rg_net_test.pth"
+path_store_weights: "/home/freiberg/shelf/"
+path_load_weights: "/home/freiberg/shelf/rg_net_test.pth"
 confidence_threshold: 0.75
 mask_threshold: 0.75
 

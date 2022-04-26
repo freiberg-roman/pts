@@ -4,7 +4,7 @@ discount: 0.99
 seed: 0
 explore_probability: 0.1
 amount_pushes: 10
-path_load_weights: "/home/roman/shelf/dqn_net.pth"
+path_load_weights: "/home/freiberg/shelf/dqn_net.pth"
 
 train:
   maximum_iterations: 1000000
