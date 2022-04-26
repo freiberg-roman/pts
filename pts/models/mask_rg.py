@@ -16,7 +16,6 @@ from torch.utils import data as td
 from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
 from torchvision.models.detection.mask_rcnn import MaskRCNNPredictor
 
-from pts.utils.color_space import color_space, color_space_red
 from pts.utils.train_eval import reduce_dict
 
 HEIGHT = 1024
@@ -169,28 +168,6 @@ class MaskRGNetwork(nn.Module):
         print("num boxes that have a score higher than .75 --> ", num_box)
         plt.show()
 
-    @staticmethod
-    def print_masks(image, input_tensor, score_threshold=0.75):
-        masks = input_tensor[0]["masks"]
-        scores = input_tensor[0]["scores"]
-        num_pred = masks.shape[0]
-        num_masks = 0
-        all = np.zeros((HEIGHT, WIDTH), dtype=np.uint8)
-        for mask in range(0, num_pred):
-            if scores[mask] > score_threshold:
-                # TODO if cuda, add a control here
-
-                mask_arr = np.asarray(masks[mask].cpu().detach()).reshape(
-                    (HEIGHT, WIDTH)
-                )
-                mask_arr = np.where(mask_arr > score_threshold, 1, 0)
-                all[np.where(mask_arr > 0)] = num_masks
-
-                num_masks += 1
-        plt.imshow(all)
-        plt.show()
-        print("num masks that have a score higher than .75 --> ", num_masks)
-
 
 class RewardGenerator:
     def __init__(self, confidence_threshold=0.75, mask_threshold=0.75, device="cuda"):
@@ -237,13 +214,6 @@ class RewardGenerator:
                 self.valid_boxes.append(self.boxes[pred_no])
                 self.num_valid_pred += 1
 
-    def f1_reward(self):
-        pass
-
-    def object_wise(self):
-        compare = 0
-        return compare
-
     @staticmethod
     def _jaccard(gt, pred):
 
@@ -263,12 +233,10 @@ class RewardGenerator:
         if self.num_objs <= 0:
             raise ValueError("no objects detected for reward generation")
 
-        sum_iou = np.sum(res, axis=0)
-        sum_iou = sum_iou[1]
+        sum_iou = np.sum(res, axis=0)[1]
         reward_iou = sum_iou / self.num_objs
 
-        true_detections = np.count_nonzero(res, axis=0)
-        true_detections = true_detections[1]
+        true_detections = np.count_nonzero(res, axis=0)[1]
         num_non_detected = self.num_objs - true_detections
         reward = reward_iou + num_non_detected * (-0.02)
         return (
@@ -304,36 +272,6 @@ class RewardGenerator:
                 pred_order[idx_gt] = [254, 0]
             results = []
         return pred_order
-
-    def print_masks(self):
-        num_masks = 0
-        all = np.zeros((self.height, self.width), dtype=np.uint8)
-        for mask in range(self.num_pred):
-            if self.scores[mask] > self.confidence_threshold:
-                mask_arr = np.asarray(self.masks[mask].cpu().detach()).reshape(
-                    (self.height, self.width)
-                )
-                mask_arr = np.where(mask_arr > self.mask_threshold, 1, 0)
-                all[np.where(mask_arr > 0)] = num_masks
-                num_masks += 1
-        return all
-
-    def print_seg_diff(self, order):
-        img_err_masks = np.zeros([self.height, self.width, 3], dtype=np.uint8)
-        for idx, curr_gt in enumerate(self.gts):
-            if not (int(order[idx][0]) == 254 or int(order[idx][0]) == 255):
-                curr_pred = np.asarray(
-                    self.masks[int(order[idx][0])].cpu().detach()
-                ).reshape((self.height, self.width))
-                curr_pred = np.where(curr_pred > self.mask_threshold, 1, 0)
-
-                compare = curr_pred != curr_gt
-                img_err_masks[compare] = color_space[np.abs(41 - idx)]
-            else:
-                img_err_masks[np.asarray(curr_gt, dtype=np.bool)] = color_space_red[
-                    np.abs(17 - idx)
-                ]
-        return img_err_masks
 
 
 class MaskRG:

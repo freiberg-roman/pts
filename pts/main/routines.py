@@ -31,7 +31,7 @@ def train_dqn(cfg_dqn, cfg_rg, cfg_env):
             pix_ind[1] * heightmap_res + ws_limits[1][0],
         )
 
-        return x_push, y_push
+        return x_push, y_push, pix_ind
 
     # ### Get initial scene data ###
     points, colors = train_scene.get_point_cloud()
@@ -47,7 +47,7 @@ def train_dqn(cfg_dqn, cfg_rg, cfg_env):
     for i in range(cfg_dqn.train.maximum_iterations):
         # ### Execute Push ###
         push_pred = trainer.forward(color_heightmap, depth_heightmap)
-        x_push, y_push = predict_push_position(
+        x_push, y_push, pix_ind = predict_push_position(
             push_pred, exploration=False, size=push_pred.shape
         )
         train_scene.push_at(x_push, y_push)
@@ -84,14 +84,14 @@ def train_dqn(cfg_dqn, cfg_rg, cfg_env):
 
         # ### Update network ###
 
-        label_val, _, _ = trainer.get_reward_value(
+        reward = trainer.get_reward_value(
             color_heightmap,
             depth_heightmap,
             prev_seg_reward,
             seg_reward,
             change_detected,
         )
-        trainer.backprop((x_push, y_push), label_val)
+        trainer.backprop(pix_ind, reward, depth_heightmap.shape)
 
 
 def test_dqn(cfg_dqn, cfg_env):
@@ -119,8 +119,4 @@ def test_dqn(cfg_dqn, cfg_env):
         max_pred[1] * heightmap_res + ws_limits[1][0],
     )
     train_scene.push_at(x_push, y_push)
-
-    # ### Evaluate result ###
-
-    # mask_rg_net = MaskRG(cfg_rg)  # network is in testing mode
-    # success_threshold = cfg_dqn.success_threshold
+    train_scene.beam_back()

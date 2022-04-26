@@ -16,7 +16,7 @@ train:
   cuda_available: False
 
 dataset:
-  dataset_path: "/home/roman/shelf/test-ds/"
+  dataset_path: "/home/freiberg/shelf/test-ds/"
   base_rgb: ""
   base_seg: "_seg"
   base_depth: "_depth"
@@ -24,4 +24,4 @@ dataset:
   depth_dir: "depth/"
 
 test:
-  path_test_image: "/home/roman/shelf/test.png"
+  path_test_image: "/home/freiberg/shelf/test.png"

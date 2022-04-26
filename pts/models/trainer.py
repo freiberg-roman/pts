@@ -1,6 +1,7 @@
 import numpy as np
 import torch
 from scipy import ndimage
+from torch.autograd import Variable
 
 from pts.models import ReinforcementNet
 
@@ -122,50 +123,32 @@ class Trainer:
         else:
             current_reward = -0.5
 
-        seg_vals = [
-            curr_seg_score,
-            prev_seg_score,
-            diff,
-            current_reward,
-            change_detected,
-        ]
-        next_push_predictions = self.forward(
-            next_color_heightmap, next_depth_heightmap, is_volatile=True
-        )
+        next_push_predictions = self.forward(next_color_heightmap, next_depth_heightmap)
 
         future_reward = np.max(next_push_predictions)
-        expected_reward = current_reward + self.gamma * future_reward
-        return expected_reward, current_reward, seg_vals
+        rew = current_reward + self.gamma * future_reward
+        return rew
 
-    def backprop(self, best_pix_ind, label_value):
-        label = np.zeros((1, 320, 320))
-        action_area = np.zeros((224, 224))
-        action_area[best_pix_ind[1]][best_pix_ind[2]] = 1
-        tmp_label = np.zeros((224, 224))
-        tmp_label[action_area > 0] = label_value
-        label[0, 48 : (320 - 48), 48 : (320 - 48)] = tmp_label
+    def backprop(self, pix_ind, reward, height_map_dim):
+        out_prob_dim = self.model.output_prob[0][0].size()
+        out_prob_dim = (out_prob_dim[2], out_prob_dim[3])
+        pad_width = (out_prob_dim[0] - height_map_dim[0]) // 2
+        pad_height = (out_prob_dim[1] - height_map_dim[1]) // 2
+        label = np.zeros((1, *out_prob_dim))
+        label[0, pad_width + pix_ind[1], pad_height + pix_ind[2]] = reward
 
         # Compute label mask
         label_weights = np.zeros(label.shape)
-        tmp_label_weights = np.zeros((224, 224))
-        tmp_label_weights[action_area > 0] = 1
-        label_weights[0, 48 : (320 - 48), 48 : (320 - 48)] = tmp_label_weights
+        label_weights[0, pad_width + pix_ind[1], pad_height + pix_ind[2]] = 1
 
         self.optimizer.zero_grad()
-        loss_value = 0
-
-        loss = self.criterion(0)
-
-        # TODO figure out
-        # loss = self.criterion(
-        # self.model.output_prob[0][0].view(1, 320, 320),
-        # Variable(torch.from_numpy(label).float())) *
-        # Variable( torch.from_numpy(label_weights).float(), requires_grad=True)
-
+        loss = self.criterion(
+            self.model.output_prob[0][0].view(1, *out_prob_dim),
+            Variable(torch.from_numpy(label).float())
+            * Variable(torch.from_numpy(label_weights).float(), requires_grad=True),
+        )
         loss = loss.sum()
         loss.backward()
-        loss_value = loss.cpu().data.numpy()
-        l_value = loss_value
         self.optimizer.step()
 
-        return l_value
+        return loss.cpu().data.numpy()
