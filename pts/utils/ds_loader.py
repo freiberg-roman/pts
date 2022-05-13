@@ -1,5 +1,6 @@
 import os
 
+import cv2 as cv
 import numpy as np
 import torch
 import torchvision.transforms as T
@@ -31,23 +32,33 @@ class PTSDataset:
         num_obj = len(obj_ids)
         masks = np.zeros((num_obj, 1000, 1000), dtype=np.uint8)
         boxes = []
-
+        valid_masks_idxs = []
         # create separate binary masks and bboxes for each object
         for i in range(num_obj):
             masks[i][mask == obj_ids[i]] = 1
-            pos = np.where(masks[i])
+            masks[i] = cv.erode(masks[i], kernel=np.ones((6, 6)))
+            masks[i] = cv.dilate(masks[i], kernel=np.ones((6, 6)))
+            if np.sum(masks[i]) != 0:
+                valid_masks_idxs.append(i)
+
+        valid_masks = np.zeros((len(valid_masks_idxs), 1000, 1000), dtype=np.uint8)
+        for i, valid_idx in enumerate(valid_masks_idxs):
+            valid_masks[i] = masks[valid_idx]
+            pos = np.where(valid_masks[i])
             xmin = np.min(pos[1])
             xmax = np.max(pos[1])
             ymin = np.min(pos[0])
             ymax = np.max(pos[0])
-            boxes.append([xmin, xmax, ymin, ymax])
+            boxes.append([xmin, ymin, xmax, ymax])
+
+        masks = valid_masks
 
         boxes = torch.as_tensor(boxes, dtype=torch.float32)
         labels = torch.ones((num_obj,), dtype=torch.int64)
         masks = torch.as_tensor(masks, dtype=torch.uint8)
 
         image_id = torch.tensor([idx])
-        area = (boxes[:, 3] - boxes[:, 1]) * (boxes[:, 2] - boxes[:, 0])
+        area = (boxes[:, 2] - boxes[:, 0]) * (boxes[:, 3] - boxes[:, 1])
 
         # If there is no object on the scene,
         # this will be used to ignore that instance during coco eval
@@ -55,7 +66,7 @@ class PTSDataset:
 
         # this control is to solve 'loss is NaN error'
         # during training which can be a result of an invalid box
-        keep = (boxes[:, 3] > boxes[:, 1]) & (boxes[:, 2] > boxes[:, 0])
+        keep = (boxes[:, 2] > boxes[:, 0]) & (boxes[:, 3] > boxes[:, 1])
         boxes = boxes[keep]
         masks = masks[keep]
 
