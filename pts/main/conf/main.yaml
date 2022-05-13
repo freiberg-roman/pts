@@ -6,7 +6,9 @@ defaults:
 
 root_dir: "./exp"
 save_data_to: ""
-mode: "train_dqn"  # others are 'train_rg', 'train_dqn', 'test_rg' and 'test_dqn'
+mode: "merge_data"  # others are 'train_rg', 'train_dqn', 'test_rg', 'test_dqn' and 'merge_data'
+data_base_path: "/home/freiberg/shelf/test-ds/"
+process_id: "p1"
 
 hydra:
   run:

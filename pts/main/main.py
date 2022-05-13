@@ -10,12 +10,13 @@ from pts.main import test_dqn, train_dqn
 from pts.models import MaskRGNetwork
 from pts.utils.ds_loader import PTSDataset
 from pts.utils.image_helper import show
+from pts.utils.merge_data import merge_data
 
 
 @hydra.main(config_path="conf", config_name="main")
 def run(cfg: DictConfig):
     if cfg.mode == "gen":
-        generate(cfg.env, save_to=cfg.save_data_to)
+        generate(cfg.env, save_to=cfg.data_base_path + cfg.process_id + "/")
 
     if cfg.mode == "train_rg":
         rg_net = MaskRGNetwork(cfg.reward_model)
@@ -49,6 +50,9 @@ def run(cfg: DictConfig):
 
     if cfg.mode == "test_dqn":
         test_dqn(cfg.eval_model, cfg.env)
+
+    if cfg.mode == "merge_data":
+        merge_data(cfg.data_base_path)
 
 
 if __name__ == "__main__":

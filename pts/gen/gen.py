@@ -1,8 +1,9 @@
 import os
 import time
+from pathlib import Path
 
+import alr_sim.sims
 import alr_sim.utils.geometric_transformation as gt
-import matplotlib.pyplot as plt
 import numpy as np
 from alr_sim.sims.mujoco.FreezableMujocoEnvironment import FreezableMujocoEnvironment
 from alr_sim.sims.SimFactory import SimRepository
@@ -19,6 +20,8 @@ def generate(cfg_gen: DictConfig, save_to=""):
     # ### Scene creation ###
 
     glob_path = os.path.dirname(os.path.abspath(__file__))
+    for type in ["depth", "seg", "rgb"]:
+        Path(save_to + type).mkdir(parents=True, exist_ok=True)
 
     # ### Main Generation Loop ###
     for i in range(cfg_gen.session_limit):
@@ -48,7 +51,8 @@ def generate(cfg_gen: DictConfig, save_to=""):
                     size=[0.005, 1.2, 0.4],
                     static=True,
                 ),
-            ]
+            ],
+            render=alr_sim.sims.Scene.RenderMode.HUMAN,
         )
         freezable.start()
 
@@ -72,7 +76,7 @@ def generate(cfg_gen: DictConfig, save_to=""):
             for _ in range(200):
                 freezable.robot.nextStep()
 
-        for _ in range(2000):
+        for _ in range(200):
             freezable.robot.nextStep()
         # ### Saving image ###
 
@@ -81,14 +85,12 @@ def generate(cfg_gen: DictConfig, save_to=""):
         seg_img = freezable.scene.get_cage_cam().get_segmentation(
             height=1000, width=1000, depth=False
         )
-        plt.imshow(seg_img), plt.show()
-        plt.imshow(rgb), plt.show()
         cv.imwrite(
-            save_to + "%d.png" % i,
+            save_to + "rgb/" + "%d.png" % i,
             cv.cvtColor(rgb, cv.COLOR_RGB2BGR),
         )
-        np.save(save_to + "%d_depth.npy" % i, depth)
-        np.save(save_to + "%d_seg.npy" % i, seg_img)
+        np.save(save_to + "depth/" + "%d.npy" % i, depth)
+        np.save(save_to + "seg/" + "%d.npy" % i, seg_img)
         print(
             "Iteration: "
             + str(i + 1)
