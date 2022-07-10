@@ -6,7 +6,7 @@ defaults:
 
 root_dir: "./exp"
 save_data_to: ""
-mode: "merge_data"  # others are 'train_rg', 'train_dqn', 'test_rg', 'test_dqn' and 'merge_data'
+mode: "gen"  # others are 'train_rg', 'train_dqn', 'test_rg', 'test_dqn' and 'merge_data'
 data_base_path: "/home/freiberg/shelf/test-ds/"
 process_id: "p1"
 

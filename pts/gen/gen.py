@@ -5,7 +5,7 @@ from pathlib import Path
 import alr_sim.sims
 import alr_sim.utils.geometric_transformation as gt
 import numpy as np
-from alr_sim.sims.mujoco.FreezableMujocoEnvironment import FreezableMujocoEnvironment
+from alr_sim.sims.mujoco.FreezableMujocoEnv import FreezableMujocoEnv
 from alr_sim.sims.SimFactory import SimRepository
 from alr_sim.sims.universal_sim.PrimitiveObjects import Box
 from cv2 import cv2 as cv
@@ -26,7 +26,7 @@ def generate(cfg_gen: DictConfig, save_to=""):
     # ### Main Generation Loop ###
     for i in range(cfg_gen.session_limit):
         # create freezable context
-        freezable = FreezableMujocoEnvironment(
+        freezable = FreezableMujocoEnv(
             [
                 SimRepository.get_factory(cfg_gen.simulator).create_camera(
                     "cage_cam",

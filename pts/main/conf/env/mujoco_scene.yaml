@@ -1,7 +1,7 @@
 workspace_limit: [[0.55, 0.998], [-0.224, 0.224], [0.02, 0.62]] # workspace limits
 heightmap_resolution: 0.002
-min_number_objects: 30
-max_number_objects: 1
+min_number_objects: 1
+max_number_objects: 30
 session_limit: 10000
 drop_height: 0.5
 total_number_objects: 8
