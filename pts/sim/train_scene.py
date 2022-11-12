@@ -3,13 +3,11 @@ import os.path
 import alr_sim.utils.geometric_transformation as gt
 import numpy as np
 import pybullet as p
-from alr_sim.sims.mujoco.FreezableMujocoEnvironment import FreezableMujocoEnvironment
 from alr_sim.sims.SimFactory import SimRepository
 from alr_sim.sims.universal_sim.PrimitiveObjects import Box
 from alr_sim.utils.geometric_transformation import quat2mat
 
 from pts.utils.iter.RndObjectIter import RndMJObjectIter
-from pts.utils.iter.RndPoseIter import RndPoseIter
 
 
 class TrainScene:
