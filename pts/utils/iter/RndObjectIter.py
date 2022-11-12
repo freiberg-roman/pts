@@ -109,6 +109,7 @@ class RndMJObjectIter:
         name = "shape_{number}".format(number=self.num)
         id = np.random.randint(0, 7 + 1)
         rgba = np.random.random_sample(4)
+        rgba[3] = 1.0
         pose = next(self.generator)
         if self.num >= self.num_object:
             raise StopIteration
