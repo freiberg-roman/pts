@@ -75,12 +75,12 @@ class TrainScene:
 
         self.cam_intrinsics = (
             (
-                self.freezable.scene.get_cage_cam().fx,
-                self.freezable.scene.get_cage_cam().cx,
+                self.scene.get_cage_cam().fx,
+                self.scene.get_cage_cam().cx,
             ),
             (
-                self.freezable.scene.get_cage_cam().fy,
-                self.freezable.scene.get_cage_cam().cy,
+                self.scene.get_cage_cam().fy,
+                self.scene.get_cage_cam().cy,
             ),
         )
 
