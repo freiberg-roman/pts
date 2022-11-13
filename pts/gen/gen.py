@@ -1,22 +1,22 @@
-import os
 import time
-from pathlib import Path
+from typing import List
 
 import alr_sim.utils.geometric_transformation as gt
 import cv2 as cv
 import numpy as np
-from alr_sim.sims.mj_beta import MjRobot, MjScene
+from alr_sim.sims.mj_beta import MjScene
 from alr_sim.sims.SimFactory import SimRepository
 from alr_sim.sims.universal_sim.PrimitiveObjects import Box
 
 from pts.utils.iter.RndObjectIter import RndMJObjectIter, RndPoseIter
 
 
-def generate(sessions: int, save_to: str):
+def generate(
+    sessions: int, save_to: str, workspace: List[List[int]], min_obj: int, max_obj: int
+):
 
     # ### Scene creation ###
 
-    glob_path = os.path.dirname(os.path.abspath(__file__))
     # for type in ["depth", "seg", "rgb"]:
     #     Path(save_to + type).mkdir(parents=True, exist_ok=True)
 
@@ -36,10 +36,10 @@ def generate(sessions: int, save_to: str):
             ),
             Box(
                 name="drop_zone",
-                init_pos=[0.6, 0.0, -0.01],
+                init_pos=[0.6, 0.0, 0.08],
                 rgba=[1.0, 1.0, 1.0, 1.0],
                 init_quat=[0.0, 1.0, 0.0, 0.0],
-                size=[0.6, 0.6, 0.005],
+                size=[0.6, 1.0, 0.005],
                 static=True,
             ),
             Box(
@@ -56,10 +56,10 @@ def generate(sessions: int, save_to: str):
         sim_factory.create_robot(scene)
         scene.start()
 
-        gen_obj_pose = RndPoseIter(
-            limits=[[0.55, 0.998], [-0.224, 0.224], [0.02, 0.62]], drop_heigth=0.2
+        gen_obj_pose = RndPoseIter(limits=workspace, drop_heigth=0.2)
+        gen_obj_iter = RndMJObjectIter(
+            min=min_obj, max=max_obj, pose_generator=gen_obj_pose
         )
-        gen_obj_iter = RndMJObjectIter(min=10, max=20, pose_generator=gen_obj_pose)
 
         # Drop objects onto the scene table
         for new_obj in gen_obj_iter:
@@ -88,4 +88,4 @@ def generate(sessions: int, save_to: str):
             + str(time.time() - start_time)
             + " s."
         )
-        scene.reset()
+        scene.obj_reset()

@@ -41,10 +41,10 @@ class TrainScene:
             ),
             Box(
                 name="drop_zone",
-                init_pos=[0.6, 0.0, -0.01],
+                init_pos=[0.6, 0.0, 0.08],
                 rgba=[1.0, 1.0, 1.0, 1.0],
                 init_quat=[0.0, 1.0, 0.0, 0.0],
-                size=[0.6, 0.6, 0.005],
+                size=[0.6, 1.0, 0.005],
                 static=True,
             ),
             Box(
@@ -61,10 +61,10 @@ class TrainScene:
         self.robot = sim_factory.create_robot(self.scene)
         self.scene.start()
 
-        gen_obj_pose = RndPoseIter(
-            limits=[[0.55, 0.998], [-0.224, 0.224], [0.02, 0.62]], drop_heigth=0.2
+        gen_obj_pose = RndPoseIter(limits=self.ws_limits, drop_heigth=0.2)
+        gen_obj_iter = RndMJObjectIter(
+            min=self.min_obj, max=self.min_obj, pose_generator=gen_obj_pose
         )
-        gen_obj_iter = RndMJObjectIter(min=10, max=20, pose_generator=gen_obj_pose)
 
         # Drop objects onto the scene table
         for new_obj in gen_obj_iter:
@@ -138,7 +138,7 @@ class TrainScene:
     def beam_back(self):
         ...
 
-    def push_at(self, x, y, height=0.5, intermediate_steps=1):
+    def push_at(self, x, y, height=0.5, intermediate_steps=5):
         # goto position above
         self.robot.gotoCartPositionAndQuat(
             desiredPos=[x, y, height], desiredQuat=[0, 1, 0, 0], duration=4.0
@@ -150,7 +150,7 @@ class TrainScene:
             self.robot.gotoCartPositionAndQuat(
                 desiredPos=interp[i, :],
                 desiredQuat=[0, 1, 0, 0],
-                duration=4.0 / intermediate_steps,
+                duration=6.0 / intermediate_steps,
             )
         self.robot.gotoCartPositionAndQuat(
             desiredPos=[x, y, 0.0],

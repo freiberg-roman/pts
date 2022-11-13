@@ -38,7 +38,9 @@ class TemplateObject(MjLoadable, MjFreezable):
             <worldbody>
                 <body name="{name}" pos="{pos}" quat="{quat}">
                     <freejoint name="{name}:joint" />
-                    <geom quat="0.707107 0 -0.707107 0" rgba="{rgba}" mesh="{name}_mesh" type="mesh" solimp="0.998 0.998 0.001" solref="0.001 1" density="50" friction="0.95 0.3 0.1" condim="4"/>
+                    <geom quat="0.707107 0 -0.707107 0" rgba="{rgba}"
+                    mesh="{name}_mesh" type="mesh" solimp="0.998 0.998 0.001"
+                    solref="0.001 1" density="50" friction="0.95 0.3 0.1" condim="4"/>
                 </body>
             </worldbody>
         </mujocoinclude>

@@ -19,6 +19,9 @@ def run(cfg: DictConfig):
         generate(
             sessions=cfg.env.session_limit,
             save_to=cfg.data_base_path + cfg.process_id + "/",
+            workspace=cfg.env.workspace_limit,
+            min_obj=cfg.env.min_number_objects,
+            max_obj=cfg.env.max_number_objects,
         )
 
     if cfg.mode == "train_rg":
