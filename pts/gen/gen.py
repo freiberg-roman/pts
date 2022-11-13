@@ -1,88 +1,78 @@
-import os
 import time
-from pathlib import Path
+from typing import List
 
-import alr_sim.sims
 import alr_sim.utils.geometric_transformation as gt
+import cv2 as cv
 import numpy as np
-from alr_sim.sims.mujoco.FreezableMujocoEnv import FreezableMujocoEnv
+from alr_sim.sims.mj_beta import MjScene
 from alr_sim.sims.SimFactory import SimRepository
 from alr_sim.sims.universal_sim.PrimitiveObjects import Box
-from cv2 import cv2 as cv
-from omegaconf import DictConfig
 
-from pts.utils.iter.RndObjectIter import RndMJObjectIter
-from pts.utils.iter.RndPoseIter import RndPoseIter
+from pts.utils.iter.RndObjectIter import RndMJObjectIter, RndPoseIter
 
 
-def generate(cfg_gen: DictConfig, save_to=""):
+def generate(
+    sessions: int, save_to: str, workspace: List[List[int]], min_obj: int, max_obj: int
+):
 
     # ### Scene creation ###
 
-    glob_path = os.path.dirname(os.path.abspath(__file__))
-    for type in ["depth", "seg", "rgb"]:
-        Path(save_to + type).mkdir(parents=True, exist_ok=True)
+    # for type in ["depth", "seg", "rgb"]:
+    #     Path(save_to + type).mkdir(parents=True, exist_ok=True)
 
     # ### Main Generation Loop ###
-    for i in range(cfg_gen.session_limit):
-        # create freezable context
-        freezable = FreezableMujocoEnv(
-            [
-                SimRepository.get_factory(cfg_gen.simulator).create_camera(
-                    "cage_cam",
-                    cfg_gen.data.cam_width,
-                    cfg_gen.data.cam_height,
-                    [0.0, 0.0, cfg_gen.drop_height + 0.7],  # init pos.
-                    gt.euler2quat([-np.pi * 7 / 8, 0, np.pi / 2]),
-                ),
-                Box(
-                    name="drop_zone",
-                    init_pos=[0.6, 0.0, -0.01],
-                    rgba=[1.0, 1.0, 1.0, 1.0],
-                    init_quat=[0.0, 1.0, 0.0, 0.0],
-                    size=[0.6, 0.6, 0.005],
-                    static=True,
-                ),
-                Box(
-                    name="wall",
-                    init_pos=[1.2, 0.0, 0.35],
-                    rgba=[1.0, 1.0, 1.0, 0.1],
-                    init_quat=[0.0, 1.0, 0.0, 0.0],
-                    size=[0.005, 1.2, 0.4],
-                    static=True,
-                ),
-            ],
-            render=alr_sim.sims.Scene.RenderMode.HUMAN,
-        )
-        freezable.start()
-
-        # create object generator
-        gen_obj_iter = RndMJObjectIter(
-            cfg_gen.min_number_objects,
-            cfg_gen.max_number_objects,
-            cfg_gen.total_number_objects,
-            glob_path + "/../../" + cfg_gen.object_path,
-            idx=i,
-        )
-        gen_obj_pose = RndPoseIter(cfg_gen.workspace_limit, cfg_gen.drop_height)
+    for i in range(sessions):
         start_time = time.time()
-        for new_obj, pose in zip(gen_obj_iter, gen_obj_pose):
 
-            with freezable as f:
-                f.add_obj_rt(new_obj)
-                f.set_obj_pose(new_obj, pose.pos, pose.orientation)
+        # create environment
+        sim_factory = SimRepository.get_factory("mj_beta")
+        obj = [
+            sim_factory.create_camera(
+                "cage_cam",
+                512,  # width
+                384,  # height
+                [0.0, 0.0, 0.7 + 0.5],  # init pos.
+                gt.euler2quat([-np.pi * 7 / 8, 0, np.pi / 2]),
+            ),
+            Box(
+                name="drop_zone",
+                init_pos=[0.6, 0.0, 0.08],
+                rgba=[1.0, 1.0, 1.0, 1.0],
+                init_quat=[0.0, 1.0, 0.0, 0.0],
+                size=[0.6, 1.0, 0.005],
+                static=True,
+            ),
+            Box(
+                name="wall",
+                init_pos=[1.2, 0.0, 0.35],
+                rgba=[1.0, 1.0, 1.0, 0.1],
+                init_quat=[0.0, 1.0, 0.0, 0.0],
+                size=[0.005, 1.2, 0.4],
+                static=True,
+            ),
+        ]
 
-            # wait a bit
+        scene: MjScene = sim_factory.create_scene(object_list=obj, dt=0.001)
+        sim_factory.create_robot(scene)
+        scene.start()
+
+        gen_obj_pose = RndPoseIter(limits=workspace, drop_heigth=0.2)
+        gen_obj_iter = RndMJObjectIter(
+            min=min_obj, max=max_obj, pose_generator=gen_obj_pose
+        )
+
+        # Drop objects onto the scene table
+        for new_obj in gen_obj_iter:
+            scene.add_object_rt(new_obj)
+
             for _ in range(200):
-                freezable.robot.nextStep()
+                scene.next_step()
 
-        for _ in range(200):
-            freezable.robot.nextStep()
         # ### Saving image ###
 
         print("saving images ...")
-        rgb, depth = freezable.scene.get_cage_cam().get_image(depth=True)
-        seg_img = freezable.scene.get_cage_cam().get_segmentation(
+        rgb, depth = scene.get_cage_cam().get_image(depth=True)
+        seg_img = scene.get_cage_cam().get_segmentation(
             height=1000, width=1000, depth=False
         )
         cv.imwrite(
@@ -98,4 +88,4 @@ def generate(cfg_gen: DictConfig, save_to=""):
             + str(time.time() - start_time)
             + " s."
         )
-        freezable.close()
+        scene.obj_reset()
